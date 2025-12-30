@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List
 
@@ -6,6 +7,23 @@ app = FastAPI(
     title="Orbital Risk Authority API",
     description="API for the Orbital Risk Index (ORI) prototype",
     version="0.1.0",
+)
+
+# CORS: allow your GitHub Pages site to call this API
+origins = [
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
+    # Replace this with your actual GitHub Pages URL:
+    "https://erikherrera00.github.io",
+    "https://erikherrera00.github.io/orbital-risk-authority",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=False,
+    allow_methods=["GET"],
+    allow_headers=["*"],
 )
 
 
@@ -21,6 +39,15 @@ class GlobalRiskSummary(BaseModel):
     overall_risk_level: str
     orbit_bands: List[OrbitBandRisk]
     methodology_version: str
+
+
+@app.get("/", tags=["system"])
+def root():
+    return {
+        "service": "Orbital Risk Authority API",
+        "status": "ok",
+        "endpoints": ["/health", "/ori/global-summary"],
+    }
 
 
 @app.get("/health", tags=["system"])
@@ -39,19 +66,19 @@ def get_global_risk_summary():
             band_name="LEO",
             risk_score=72.5,
             risk_level="High",
-            notes="Dense operational satellite population and debris concentration."
+            notes="Dense operational satellite population and debris concentration.",
         ),
         OrbitBandRisk(
             band_name="MEO",
             risk_score=45.2,
             risk_level="Moderate",
-            notes="Navigation constellations dominate; moderate debris risk."
+            notes="Navigation constellations dominate; moderate debris risk.",
         ),
         OrbitBandRisk(
             band_name="GEO",
             risk_score=38.7,
             risk_level="Moderate",
-            notes="Crowding in key slots, but lower debris density than LEO."
+            notes="Crowding in key slots, but lower debris density than LEO.",
         ),
     ]
 
