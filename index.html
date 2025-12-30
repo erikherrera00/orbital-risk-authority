@@ -148,20 +148,52 @@
       </div>
     </div>
 
-    <h2>Phase 1: Prototype &amp; Methodology</h2>
+        <h2>Phase 1: Prototype &amp; Methodology</h2>
     <p>
-      ORA is currently in its prototype phase. Our initial work focuses on:
+      ORA is currently in its prototype phase. Initial work focuses on defining the core
+      <strong>Orbital Risk Index (ORI)</strong> framework and validating how it can support
+      regulators, insurers, and operators.
     </p>
-    <ul>
-      <li>Defining a transparent, explainable <strong>Orbital Risk Index (ORI)</strong> framework.</li>
-      <li>Building a public API with example global risk summaries.</li>
-      <li>Preparing an initial <strong>Global Orbital Risk Report</strong> suitable for policymakers and technical stakeholders.</li>
-    </ul>
-  </header>
 
-  <footer>
-    Orbital Risk Authority (ORA) &mdash; Prototype Phase &bull; All information on this page is preliminary and subject to refinement.
-  </footer>
-</body>
-</html>
+    <h2>Key documents (prototype)</h2>
+    <div class="grid">
+      <div class="card">
+        <div class="badge">Methodology</div>
+        <p>
+          <strong>Orbital Risk Index (ORI) – Methodology v0.1</strong> outlines the structure,
+          inputs, and scoring logic used to estimate orbital risk at the band, operator, and
+          satellite levels.
+        </p>
+        <p>
+          <a class="btn" href="https://github.com/erikherrera00/orbital-risk-authority/blob/main/docs/ori-methodology-v0.1.md" target="_blank" rel="noopener noreferrer">
+            View methodology draft
+          </a>
+        </p>
+      </div>
+
+      <div class="card">
+        <div class="badge">Global Snapshot</div>
+        <p>
+          The <strong>Global Orbital Risk Snapshot – 2026 (v0.1)</strong> provides an illustrative
+          view of LEO, MEO, and GEO risk levels using the prototype ORI framework.
+        </p>
+        <p>
+          <a class="btn" href="https://github.com/erikherrera00/orbital-risk-authority/blob/main/docs/global-orbital-risk-snapshot-2026-v0.1.md" target="_blank" rel="noopener noreferrer">
+            View snapshot draft
+          </a>
+        </p>
+      </div>
+
+      <div class="card">
+        <div class="badge">API Prototype</div>
+        <p>
+          A simple API endpoint exposes a mocked global risk summary aligned with the ORI v0.1
+          structure, suitable for driving early dashboards and integrations.
+        </p>
+        <p>
+          <code>/ori/global-summary</code>
+        </p>
+      </div>
+    </div>
+
 
