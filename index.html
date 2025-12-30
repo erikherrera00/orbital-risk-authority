@@ -1,199 +1,46 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>Orbital Risk Authority (ORA)</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <style>
-    body {
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      margin: 0;
-      padding: 0;
-      background: #050814;
-      color: #f3f4f6;
-      line-height: 1.6;
-    }
-    header {
-      padding: 2.5rem 1.5rem;
-      max-width: 900px;
-      margin: 0 auto;
-    }
-    .pill {
-      display: inline-block;
-      font-size: 0.8rem;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      padding: 0.25rem 0.75rem;
-      border-radius: 999px;
-      border: 1px solid #4b5563;
-      margin-bottom: 1rem;
-      opacity: 0.85;
-    }
-    h1 {
-      font-size: 2.4rem;
-      margin: 0 0 0.75rem 0;
-    }
-    h2 {
-      font-size: 1.3rem;
-      margin-top: 2.5rem;
-      margin-bottom: 0.75rem;
-    }
-    p {
-      margin: 0.3rem 0;
-      color: #d1d5db;
-    }
-    .highlight {
-      color: #93c5fd;
-    }
-    .grid {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 1.5rem;
-      margin-top: 1.5rem;
-    }
-    .card {
-      border-radius: 0.75rem;
-      border: 1px solid #1f2937;
-      padding: 1.25rem;
-      background: radial-gradient(circle at top left, #111827, #020617);
-    }
-    .badge {
-      font-size: 0.75rem;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      opacity: 0.7;
-    }
-    .tagline {
-      font-size: 1rem;
-      font-style: italic;
-      margin-top: 0.75rem;
-      color: #9ca3af;
-    }
-    .cta-row {
-      margin-top: 1.75rem;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 1rem;
-      align-items: center;
-    }
-    .btn {
-      display: inline-block;
-      padding: 0.7rem 1.2rem;
-      border-radius: 999px;
-      border: 1px solid #4b5563;
-      text-decoration: none;
-      color: #e5e7eb;
-      font-size: 0.9rem;
-    }
-    .btn-primary {
-      border-color: #93c5fd;
-    }
-    footer {
-      margin-top: 3rem;
-      padding: 1.5rem;
-      font-size: 0.75rem;
-      text-align: center;
-      color: #6b7280;
-      border-top: 1px solid #111827;
-    }
+<script>
+  // Use your actual Render URL here:
+  const ORA_API_BASE = "https://orbital-risk-authority.onrender.com";  // <-- example, replace
 
-    @media (min-width: 768px) {
-      h1 {
-        font-size: 3rem;
+  async function loadGlobalRiskSummary() {
+    const target = document.getElementById("ori-global-summary");
+    if (!target) return;
+
+    try {
+      const res = await fetch(ORA_API_BASE + "/ori/global-summary");
+      if (!res.ok) {
+        target.textContent = "Unable to load ORI global summary (API error).";
+        return;
       }
-      .grid {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
+      const data = await res.json();
+
+      let html = "";
+      html += `<p><strong>Overall Risk Score:</strong> ${data.overall_risk_score.toFixed(1)} (${data.overall_risk_level})</p>`;
+      html += "<table style='width:100%; border-collapse:collapse; margin-top:0.75rem; font-size:0.9rem;'>";
+      html += "<thead><tr>";
+      html += "<th style='text-align:left; padding:0.4rem 0;'>Orbit Band</th>";
+      html += "<th style='text-align:left; padding:0.4rem 0;'>ORI Score</th>";
+      html += "<th style='text-align:left; padding:0.4rem 0;'>Level</th>";
+      html += "<th style='text-align:left; padding:0.4rem 0;'>Notes</th>";
+      html += "</tr></thead><tbody>";
+
+      for (const band of data.orbit_bands) {
+        html += "<tr>";
+        html += `<td style='padding:0.3rem 0;'>${band.band_name}</td>`;
+        html += `<td style='padding:0.3rem 0;'>${band.risk_score.toFixed(1)}</td>`;
+        html += `<td style='padding:0.3rem 0;'>${band.risk_level}</td>`;
+        html += `<td style='padding:0.3rem 0;'>${band.notes}</td>`;
+        html += "</tr>";
       }
+
+      html += "</tbody></table>";
+      target.innerHTML = html;
+    } catch (err) {
+      console.error(err);
+      target.textContent = "Unable to load ORI global summary (network error).";
     }
-  </style>
-</head>
-<body>
-  <header>
-    <div class="pill">Orbital Risk Authority</div>
-    <h1>Quantifying responsibility in space.</h1>
-    <p>
-      The <span class="highlight">Orbital Risk Authority (ORA)</span> is an independent initiative focused on
-      measuring orbital risk, debris accountability, and space safety for governments, insurers, and satellite operators.
-    </p>
-    <p class="tagline">
-      Our core metric, the <span class="highlight">Orbital Risk Index (ORI)</span>, provides a structured way to evaluate how crowded,
-      fragile, and responsibly managed key orbital regions are.
-    </p>
+  }
 
-    <div class="cta-row">
-      <a href="#" class="btn btn-primary">Orbital Risk Index &mdash; Overview (coming soon)</a>
-      <a href="#" class="btn">API Prototype &mdash; /ori/global-summary</a>
-    </div>
-
-    <h2>What ORA focuses on</h2>
-    <div class="grid">
-      <div class="card">
-        <div class="badge">Global Orbital Risk</div>
-        <p>
-          High-level scoring for LEO, MEO, GEO and other orbital regimes, combining debris density, collision probability,
-          and long-term sustainability into a single interpretable view.
-        </p>
-      </div>
-      <div class="card">
-        <div class="badge">Accountability &amp; Behavior</div>
-        <p>
-          Operator-level assessments that consider design choices, maneuver capability, end-of-life planning, and historical behavior.
-        </p>
-      </div>
-      <div class="card">
-        <div class="badge">Policy &amp; Markets</div>
-        <p>
-          Tools and metrics that can support emerging regulatory frameworks, insurance pricing, and responsible orbital use policies.
-        </p>
-      </div>
-    </div>
-
-        <h2>Phase 1: Prototype &amp; Methodology</h2>
-    <p>
-      ORA is currently in its prototype phase. Initial work focuses on defining the core
-      <strong>Orbital Risk Index (ORI)</strong> framework and validating how it can support
-      regulators, insurers, and operators.
-    </p>
-
-    <h2>Key documents (prototype)</h2>
-    <div class="grid">
-      <div class="card">
-        <div class="badge">Methodology</div>
-        <p>
-          <strong>Orbital Risk Index (ORI) – Methodology v0.1</strong> outlines the structure,
-          inputs, and scoring logic used to estimate orbital risk at the band, operator, and
-          satellite levels.
-        </p>
-        <p>
-          <a class="btn" href="https://github.com/erikherrera00/orbital-risk-authority/blob/main/docs/ori-methodology-v0.1.md" target="_blank" rel="noopener noreferrer">
-            View methodology draft
-          </a>
-        </p>
-      </div>
-
-      <div class="card">
-        <div class="badge">Global Snapshot</div>
-        <p>
-          The <strong>Global Orbital Risk Snapshot – 2026 (v0.1)</strong> provides an illustrative
-          view of LEO, MEO, and GEO risk levels using the prototype ORI framework.
-        </p>
-        <p>
-          <a class="btn" href="https://github.com/erikherrera00/orbital-risk-authority/blob/main/docs/global-orbital-risk-snapshot-2026-v0.1.md" target="_blank" rel="noopener noreferrer">
-            View snapshot draft
-          </a>
-        </p>
-      </div>
-
-      <div class="card">
-        <div class="badge">API Prototype</div>
-        <p>
-          A simple API endpoint exposes a mocked global risk summary aligned with the ORI v0.1
-          structure, suitable for driving early dashboards and integrations.
-        </p>
-        <p>
-          <code>/ori/global-summary</code>
-        </p>
-      </div>
-    </div>
-
+  document.addEventListener("DOMContentLoaded", loadGlobalRiskSummary);
+</script>
 
