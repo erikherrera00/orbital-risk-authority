@@ -118,15 +118,15 @@ def get_global_risk_summary():
                 object_count=obj_count,
                 population_pressure_index=ppi,
                 notes=notes,
-             )
-         )
+            )
+        )
 
-     return GlobalRiskSummary(
-         overall_risk_score=61.3,
-         overall_risk_level="Elevated",
-         orbit_bands=orbit_bands,
-         methodology_version="ORI-0.2-PPI",
-     )
+    return GlobalRiskSummary(
+        overall_risk_score=61.3,
+        overall_risk_level="Elevated",
+        orbit_bands=orbit_bands,
+        methodology_version="ORI-0.2-PPI",
+    )
 
 
 class OperatorRisk(BaseModel):
