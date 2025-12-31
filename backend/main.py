@@ -63,7 +63,7 @@ def get_global_risk_summary():
     TEMP: mocked data until we integrate real orbital datasets.
     This is just to power the first dashboard + show structure.
     """
-        orbit_bands = [
+    orbit_bands = [
         OrbitBandRisk(
             band_name="LEO",
             risk_score=72.5,
