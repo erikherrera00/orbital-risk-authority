@@ -39,6 +39,8 @@ This snapshot focuses on **orbit band scores** only.
 
 These scores mirror the prototype API response from `/ori/global-summary`.
 
+In this prototype, each orbit band is also assigned an illustrative **object_count** and **Population Pressure Index (PPI)**. The PPI is a 0–100 scale intended to reflect how crowded a given region is relative to a notional reference level. Future versions will ground these values in actual cataloged object populations and their growth trends.
+
 ---
 
 ## 4. Qualitative Observations
