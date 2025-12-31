@@ -125,6 +125,18 @@ In the prototype phase, ORI will rely on:
 
 These inputs will initially be used to generate **illustrative** scores to validate the framework and visualization approach. No ORI v0.1 scores should be treated as definitive or used for policy decisions without explicit qualification.
 
+## 5.5 Planned Data Inputs (v0.2+)
+
+While v0.1 uses illustrative data, future ORI versions intend to incorporate:
+
+- Public catalog sources (e.g., CelesTrak)
+- Conjunction and space situational awareness datasets (where available)
+- Launch cadence and fleet growth statistics
+- Reported disposal performance vs policy expectations
+- Public filings and transparency statements
+
+Initial implementations may focus on high-level aggregate indicators rather than precise physics-based collision probabilities, with fidelity increasing over time.
+
 ---
 
 ## 6. Limitations and Roadmap
