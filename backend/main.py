@@ -26,6 +26,25 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Approximate tracked object counts per band (prototype values, to be refined)
+BAND_OBJECT_COUNTS = {
+    "LEO": 36000,
+    "MEO": 4000,
+    "GEO": 3000,
+}
+
+MAX_OBJECTS = max(BAND_OBJECT_COUNTS.values())
+
+
+def compute_population_pressure(count: int) -> float:
+    """
+    Simple 0–100 population pressure index based on relative object counts.
+    100 corresponds to the most crowded band in this mapping.
+    """
+    if MAX_OBJECTS <= 0:
+        return 0.0
+    return round(min(100.0, (count / MAX_OBJECTS) * 100.0), 1)
+
 
 class OrbitBandRisk(BaseModel):
     band_name: str  # e.g. "LEO", "MEO", "GEO"
@@ -63,40 +82,51 @@ def get_global_risk_summary():
     TEMP: mocked data until we integrate real orbital datasets.
     This is just to power the first dashboard + show structure.
     """
-    orbit_bands = [
-        OrbitBandRisk(
-            band_name="LEO",
-            risk_score=72.5,
-            risk_level="High",
-            object_count=6000,  # placeholder; to be replaced with real data
-            population_pressure_index=85.0,  # 0–100; placeholder
-            notes="Dense operational satellite population and debris concentration.",
-        ),
-        OrbitBandRisk(
-            band_name="MEO",
-            risk_score=45.2,
-            risk_level="Moderate",
-            object_count=1500,  # placeholder
-            population_pressure_index=55.0,  # placeholder
-            notes="Navigation constellations dominate; moderate debris risk.",
-        ),
-        OrbitBandRisk(
-            band_name="GEO",
-            risk_score=38.7,
-            risk_level="Moderate",
-            object_count=500,  # placeholder
-            population_pressure_index=40.0,  # placeholder
-            notes="Crowding in key slots, but lower debris density than LEO.",
-        ),
-    ]
+        band_definitions = [
+            (
+                "LEO",
+                72.5,
+                "High",
+                "Dense operational satellite population and debris concentration.",
+            ),
+            (
+                "MEO",
+                45.2,
+                "Moderate",
+                "Navigation constellations dominate; moderate debris risk.",
+            ),
+            (
+                "GEO",
+                38.7,
+                "Moderate",
+                "Crowding in key slots, but lower debris density than LEO.",
+            ),
+        ]
 
+        orbit_bands = []
 
-    return GlobalRiskSummary(
-        overall_risk_score=61.3,
-        overall_risk_level="Elevated",
-        orbit_bands=orbit_bands,
-        methodology_version="ORI-0.1-MOCK",
-    )
+        for band_name, risk_score, risk_level, notes in band_definitions:
+            obj_count = BAND_OBJECT_COUNTS.get(band_name, 0)
+            ppi = compute_population_pressure(obj_count)
+
+            orbit_bands.append(
+                OrbitBandRisk(
+                    band_name=band_name,
+                    risk_score=risk_score,
+                    risk_level=risk_level,
+                    object_count=obj_count,
+                    population_pressure_index=ppi,
+                    notes=notes,
+                )
+             )
+
+         return GlobalRiskSummary(
+             overall_risk_score=61.3,
+             overall_risk_level="Elevated",
+             orbit_bands=orbit_bands,
+             methodology_version="ORI-0.2-PPI",
+         )
+
 
 class OperatorRisk(BaseModel):
     operator_name: str
