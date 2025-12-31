@@ -29,8 +29,10 @@ app.add_middleware(
 
 class OrbitBandRisk(BaseModel):
     band_name: str  # e.g. "LEO", "MEO", "GEO"
-    risk_score: float  # 0-100
+    risk_score: float  # 0-100 overall ORI band score
     risk_level: str  # e.g. "Low", "Moderate", "High", "Critical"
+    object_count: int  # approximate tracked objects in this band
+    population_pressure_index: float  # 0-100, derived from object_count
     notes: str
 
 
@@ -61,26 +63,33 @@ def get_global_risk_summary():
     TEMP: mocked data until we integrate real orbital datasets.
     This is just to power the first dashboard + show structure.
     """
-    orbit_bands = [
+        orbit_bands = [
         OrbitBandRisk(
             band_name="LEO",
             risk_score=72.5,
             risk_level="High",
+            object_count=6000,  # placeholder; to be replaced with real data
+            population_pressure_index=85.0,  # 0–100; placeholder
             notes="Dense operational satellite population and debris concentration.",
         ),
         OrbitBandRisk(
             band_name="MEO",
             risk_score=45.2,
             risk_level="Moderate",
+            object_count=1500,  # placeholder
+            population_pressure_index=55.0,  # placeholder
             notes="Navigation constellations dominate; moderate debris risk.",
         ),
         OrbitBandRisk(
             band_name="GEO",
             risk_score=38.7,
             risk_level="Moderate",
+            object_count=500,  # placeholder
+            population_pressure_index=40.0,  # placeholder
             notes="Crowding in key slots, but lower debris density than LEO.",
         ),
     ]
+
 
     return GlobalRiskSummary(
         overall_risk_score=61.3,
