@@ -233,14 +233,16 @@
       html += "<th style='text-align:left; padding:0.4rem 0;'>Orbit Band</th>";
       html += "<th style='text-align:left; padding:0.4rem 0;'>ORI Score</th>";
       html += "<th style='text-align:left; padding:0.4rem 0;'>Level</th>";
+      html += "<th style='text-align:left; padding:0.4rem 0;'>Objects (est.)</th>";
+      html += "<th style='text-align:left; padding:0.4rem 0;'>Population Pressure</th>";
       html += "<th style='text-align:left; padding:0.4rem 0;'>Notes</th>";
       html += "</tr></thead><tbody>";
 
       for (const band of data.orbit_bands) {
         html += "<tr>";
-        html += `<td style='padding:0.3rem 0;'>${band.band_name}</td>`;
-        html += `<td style='padding:0.3rem 0;'>${band.risk_score.toFixed(1)}</td>`;
         html += `<td style='padding:0.3rem 0;'>${band.risk_level}</td>`;
+        html += `<td style='padding:0.3rem 0;'>${band.object_count}</td>`;
+        html += `<td style='padding:0.3rem 0;'>${band.population_pressure_index.toFixed(1)}</td>`;
         html += `<td style='padding:0.3rem 0;'>${band.notes}</td>`;
         html += "</tr>";
       }
