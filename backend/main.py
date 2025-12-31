@@ -89,3 +89,35 @@ def get_global_risk_summary():
         methodology_version="ORI-0.1-MOCK",
     )
 
+class OperatorRisk(BaseModel):
+    operator_name: str
+    risk_score: float
+    risk_level: str
+    fleet_size: int
+    notes: str
+
+
+@app.get("/ori/operators", response_model=List[OperatorRisk], tags=["ori"])
+def get_operator_risk():
+    """
+    Prototype operator-level ORI scores.
+    Currently mocked; in future versions, this will be derived from
+    fleet exposure, behavior, disposal performance, and transparency.
+    """
+    return [
+        OperatorRisk(
+            operator_name="MockSat Constellations Inc.",
+            risk_score=78.0,
+            risk_level="High",
+            fleet_size=1200,
+            notes="Large LEO constellation with aggressive deployment pace and mixed disposal performance.",
+        ),
+        OperatorRisk(
+            operator_name="GeoComms Global",
+            risk_score=42.5,
+            risk_level="Moderate",
+            fleet_size=50,
+            notes="Primarily GEO assets with standard graveyard orbit disposal practices.",
+        ),
+    ]
+
