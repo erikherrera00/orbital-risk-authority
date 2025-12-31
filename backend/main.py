@@ -79,53 +79,54 @@ def health_check():
 @app.get("/ori/global-summary", response_model=GlobalRiskSummary, tags=["ori"])
 def get_global_risk_summary():
     """
-    TEMP: mocked data until we integrate real orbital datasets.
-    This is just to power the first dashboard + show structure.
+    Prototype global ORI summary.
+    Now uses approximate object counts per orbital regime and derives
+    a Population Pressure Index (0–100) relative to the most crowded band.
     """
-        band_definitions = [
-            (
-                "LEO",
-                72.5,
-                "High",
-                "Dense operational satellite population and debris concentration.",
-            ),
-            (
-                "MEO",
-                45.2,
-                "Moderate",
-                "Navigation constellations dominate; moderate debris risk.",
-            ),
-            (
-                "GEO",
-                38.7,
-                "Moderate",
-                "Crowding in key slots, but lower debris density than LEO.",
-            ),
-        ]
+    band_definitions = [
+        (
+            "LEO",
+            72.5,
+            "High",
+            "Dense operational satellite population and debris concentration.",
+        ),
+        (
+            "MEO",
+            45.2,
+            "Moderate",
+            "Navigation constellations dominate; moderate debris risk.",
+        ),
+        (
+            "GEO",
+            38.7,
+            "Moderate",
+            "Crowding in key slots, but lower debris density than LEO.",
+        ),
+    ]
 
-        orbit_bands = []
+    orbit_bands = []
 
-        for band_name, risk_score, risk_level, notes in band_definitions:
-            obj_count = BAND_OBJECT_COUNTS.get(band_name, 0)
-            ppi = compute_population_pressure(obj_count)
+    for band_name, risk_score, risk_level, notes in band_definitions:
+        obj_count = BAND_OBJECT_COUNTS.get(band_name, 0)
+        ppi = compute_population_pressure(obj_count)
 
-            orbit_bands.append(
-                OrbitBandRisk(
-                    band_name=band_name,
-                    risk_score=risk_score,
-                    risk_level=risk_level,
-                    object_count=obj_count,
-                    population_pressure_index=ppi,
-                    notes=notes,
-                )
+        orbit_bands.append(
+            OrbitBandRisk(
+                band_name=band_name,
+                risk_score=risk_score,
+                risk_level=risk_level,
+                object_count=obj_count,
+                population_pressure_index=ppi,
+                notes=notes,
              )
-
-         return GlobalRiskSummary(
-             overall_risk_score=61.3,
-             overall_risk_level="Elevated",
-             orbit_bands=orbit_bands,
-             methodology_version="ORI-0.2-PPI",
          )
+
+     return GlobalRiskSummary(
+         overall_risk_score=61.3,
+         overall_risk_level="Elevated",
+         orbit_bands=orbit_bands,
+         methodology_version="ORI-0.2-PPI",
+     )
 
 
 class OperatorRisk(BaseModel):
