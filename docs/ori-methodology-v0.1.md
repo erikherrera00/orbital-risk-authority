@@ -91,6 +91,27 @@ For a given band (e.g., LEO):
 
 The exact formulas and normalization functions will be defined in later versions as data sources are fully specified.
 
+### Population Pressure Index (PPI)
+
+For v0.2, the Orbital Risk Index introduces a **Population Pressure Index (PPI)** as a
+supporting indicator at the orbit-band level (LEO, MEO, GEO).
+
+PPI represents how crowded an orbital regime is relative to other regimes, using a
+0–100 scale. A value of 100 corresponds to the most populated band, with other bands
+scaled proportionally.
+
+For the prototype, PPI is based on approximate cataloged object populations drawn
+from widely referenced space surveillance reporting:
+
+- LEO: ~36,000 tracked objects
+- MEO: ~4,000 tracked objects
+- GEO: ~3,000 tracked objects
+
+These values are intentionally approximate and are designed to communicate *relative*
+risk and congestion rather than precise physics-driven collision probability. Future
+versions will replace these static estimates with live or periodically refreshed data feeds.
+
+
 ### 4.2 Operator Risk Score (Example Structure)
 
 For a given operator:
