@@ -169,6 +169,16 @@
       Loading global orbital risk summary…
     </div>
 
+    <h2>Live prototype: Operator Fleet Pressure</h2>
+    <p style="color:#9ca3af; font-size:0.9rem;">
+      This prototype view shows operators ranked by relative fleet dominance.
+      Values are illustrative and will be grounded in real data in future releases.
+    </p>
+
+    <div id="ori-operators" style="margin-top:0.75rem; font-size:0.95rem;">
+      Loading operator fleet pressure…
+    </div>
+
     <h2>Key documents (prototype)</h2>
     <div class="grid">
       <div class="card">
@@ -256,5 +266,50 @@
   }
 
   document.addEventListener("DOMContentLoaded", loadGlobalRiskSummary);
+
+async function loadOperatorRisk() {
+  const target = document.getElementById("ori-operators");
+  if (!target) return;
+
+  try {
+    const res = await fetch(ORA_API_BASE + "/ori/operators");
+    if (!res.ok) {
+      target.textContent = "Unable to load operator data.";
+      return;
+    }
+
+    const data = await res.json();
+
+    let html = "";
+    html += "<table style='width:100%; border-collapse:collapse; margin-top:0.75rem; font-size:0.9rem;'>";
+    html += "<thead><tr>";
+    html += "<th style='text-align:left; padding:0.4rem 0;'>Operator</th>";
+    html += "<th style='text-align:left; padding:0.4rem 0;'>Orbit Band</th>";
+    html += "<th style='text-align:left; padding:0.4rem 0;'>Fleet Size</th>";
+    html += "<th style='text-align:left; padding:0.4rem 0;'>Fleet Pressure</th>";
+    html += "<th style='text-align:left; padding:0.4rem 0;'>Notes</th>";
+    html += "</tr></thead><tbody>";
+
+    for (const op of data) {
+      html += "<tr>";
+      html += `<td style='padding:0.3rem 0;'>${op.operator_name}</td>`;
+      html += `<td style='padding:0.3rem 0;'>${op.orbit_band}</td>`;
+      html += `<td style='padding:0.3rem 0;'>${op.fleet_size}</td>`;
+      html += `<td style='padding:0.3rem 0;'>${op.fleet_pressure_index.toFixed(1)}</td>`;
+      html += `<td style='padding:0.3rem 0;'>${op.notes}</td>`;
+      html += "</tr>";
+    }
+
+    html += "</tbody></table>";
+    target.innerHTML = html;
+
+  } catch (err) {
+    console.error(err);
+    target.textContent = "Unable to load operator fleet pressure.";
+  }
+}
+
+document.addEventListener("DOMContentLoaded", loadOperatorRisk);
+
 </script>
 
