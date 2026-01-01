@@ -46,6 +46,12 @@ def compute_population_pressure(count: int) -> float:
     return round(min(100.0, (count / MAX_OBJECTS) * 100.0), 1)
 
 
+def compute_fleet_pressure(fleet_size: int, max_size: int) -> float:
+    if max_size <= 0:
+        return 0.0
+    return round(min(100.0, (fleet_size / max_size) * 100.0), 1)
+
+
 class OrbitBandRisk(BaseModel):
     band_name: str  # e.g. "LEO", "MEO", "GEO"
     risk_score: float  # 0-100 overall ORI band score
@@ -60,6 +66,14 @@ class GlobalRiskSummary(BaseModel):
     overall_risk_level: str
     orbit_bands: List[OrbitBandRisk]
     methodology_version: str
+
+
+class OperatorRisk(BaseModel):
+    operator_name: str
+    orbit_band: str
+    fleet_size: int
+    fleet_pressure_index: float  # 0-100 scale
+    notes: str
 
 
 @app.get("/", tags=["system"])
@@ -160,4 +174,38 @@ def get_operator_risk():
             notes="Primarily GEO assets with standard graveyard orbit disposal practices.",
         ),
     ]
+
+
+@app.get("/ori/operators", response_model=List[OperatorRisk], tags=["ori"])
+def get_operator_fleet_pressure():
+    """
+    Prototype operator-level Orbital Risk Index extension.
+    Provides a simple Fleet Pressure Index (0–100) based on relative
+    fleet dominance in orbit.
+    """
+    operator_fleets = [
+        ("MockSat Constellations Inc.", "LEO", 5000, "Large-scale broadband constellation."),
+        ("OrbitNav Systems", "MEO", 2000, "Global navigation satellite operator."),
+        ("GeoComms Global", "GEO", 450, "Commercial communications operator."),
+        ("RegionalSat Services", "LEO", 300, "Regional imaging and communications provider."),
+    ]
+
+    max_fleet = max(o[2] for o in operator_fleets)
+
+    results = []
+
+    for name, band, size, notes in operator_fleets:
+        fpi = compute_fleet_pressure(size, max_fleet)
+
+        results.append(
+            OperatorRisk(
+                operator_name=name,
+                orbit_band=band,
+                fleet_size=size,
+                fleet_pressure_index=fpi,
+                notes=notes,
+            )
+        )
+
+    return results
 
