@@ -39,6 +39,25 @@ ORI provides scores at three primary levels:
 
 Each level uses overlapping but distinct inputs and weightings.
 
+## Operator Fleet Pressure Index (OFPI)
+
+In addition to orbit-band level indicators, ORA introduces an operator-level view
+through the **Operator Fleet Pressure Index (OFPI)**.
+
+OFPI is a 0–100 scale used in v0.1 to represent relative system impact based primarily
+on fleet dominance — i.e., how large an operator’s active satellite presence is compared
+to other major operators in similar regimes.
+
+In this prototype, OFPI is derived from relative fleet size only. Future versions will
+incorporate additional meaningful indicators including:
+- deployment velocity
+- disposal performance and post-mission compliance
+- transparency and data sharing behavior
+- historical failure / fragmentation contribution
+
+This allows ORA to evolve toward an accountability-aware framework without prematurely
+assigning policy-driven judgment values.
+
 ---
 
 ## 3. Core Inputs (Conceptual v0.1)
