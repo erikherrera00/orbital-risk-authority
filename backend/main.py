@@ -76,6 +76,14 @@ class OperatorRisk(BaseModel):
     notes: str
 
 
+class LEOZoneRisk(BaseModel):
+    zone_label: str
+    altitude_range_km: str
+    estimated_object_count: int
+    zone_pressure_index: float  # 0-100
+    notes: str
+
+
 class OraVersion(BaseModel):
     api_version: str
     ori_version: str
@@ -191,6 +199,12 @@ def get_version():
     )
 
 
+def compute_zone_pressure(count: int, max_count: int) -> float:
+    if max_count <= 0:
+        return 0.0
+    return round(min(100.0, (count / max_count) * 100.0), 1)
+
+
 @app.get("/ori/operators", response_model=List[OperatorRisk], tags=["ori"])
 def get_operator_fleet_pressure():
     """
@@ -238,6 +252,36 @@ def get_operator_fleet_pressure():
                 orbit_band=band,
                 fleet_size=size,
                 fleet_pressure_index=fpi,
+                notes=notes,
+            )
+        )
+
+@app.get("/ori/leo-zones", response_model=List[LEOZoneRisk], tags=["ori"])
+def get_leo_zone_risk():
+    """
+    Prototype breakdown of LEO congestion by sub-bands.
+    Values are illustrative but directionally aligned with known clustering behavior.
+    """
+
+    zones = [
+        ("LEO-1", "300–500 km", 14000, "Dense cluster region with significant constellation presence."),
+        ("LEO-2", "500–800 km", 16000, "Highest object concentration region in LEO."),
+        ("LEO-3", "800–1200 km", 6000, "Fewer spacecraft but slower orbital decay."),
+    ]
+
+    max_objects = max(z[2] for z in zones)
+
+    results = []
+
+    for label, alt, count, notes in zones:
+        zpi = compute_zone_pressure(count, max_objects)
+
+        results.append(
+            LEOZoneRisk(
+                zone_label=label,
+                altitude_range_km=alt,
+                estimated_object_count=count,
+                zone_pressure_index=zpi,
                 notes=notes,
             )
         )
