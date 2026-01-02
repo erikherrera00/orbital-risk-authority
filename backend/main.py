@@ -84,12 +84,6 @@ class LEOZoneRisk(BaseModel):
     notes: str
 
 
-class OraVersion(BaseModel):
-    api_version: str
-    ori_version: str
-    prototype_stage: str
-
-
 @app.get("/", tags=["system"])
 def root():
     return {
@@ -193,9 +187,9 @@ def get_operator_risk():
 @app.get("/version", response_model=OraVersion)
 def get_version():
     return OraVersion(
-        api_version="0.2.0",
-        ori_version="ORI-0.2",
-        prototype_stage="Public prototype – band-level PPI + operator OFPI"
+        api_version="0.3.0",
+        ori_version="ORI-0.3",
+        prototype_stage="Public prototype – PPI, OFPI, and LEO sub-band congestion"
     )
 
 
