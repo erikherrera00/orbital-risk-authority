@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List
+import catalog
 
 app = FastAPI(
     title="Orbital Risk Authority API",
@@ -82,6 +83,28 @@ class LEOZoneRisk(BaseModel):
     estimated_object_count: int
     zone_pressure_index: float  # 0-100
     notes: str
+
+
+class ActiveLEOSummary(BaseModel):
+    data_source: str
+    snapshot_time_utc: str
+    leo_active_count: int
+
+
+@app.get("/ori/active-leo", response_model=ActiveLEOSummary, tags=["ori"])
+def get_active_leo_summary():
+    """
+    Real-data snapshot: count of active LEO satellites based on CelesTrak CSV.
+    """
+    objects = catalog.load_active_catalog()
+    leo_count = catalog.count_active_leo(objects)
+    snapshot_time = catalog.get_snapshot_timestamp_iso()
+
+    return ActiveLEOSummary(
+        data_source="CelesTrak active satellites CSV snapshot (GROUP=active, FORMAT=csv)",
+        snapshot_time_utc=snapshot_time,
+        leo_active_count=leo_count,
+    )
 
 
 @app.get("/", tags=["system"])
