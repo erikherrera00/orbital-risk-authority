@@ -160,8 +160,8 @@ class OperatorRisk(BaseModel):
 
 
 class OraVersion(BaseModel):
-    api_version:"0.3.0",
-    ori_version:"ORI-0.3",
+    api_version="0.3.0",
+    ori_version="ORI-0.3",
     prototype_stage="Public prototype - PPI, OFPI, and LEO sub-band congestion"
 
 
