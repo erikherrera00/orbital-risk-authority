@@ -1,5 +1,8 @@
 # Orbital Risk Authority (ORA)
 
+> **Current prototype:** ORA v0.2 – includes band-level Population Pressure Index (PPI)
+> and archetypal Operator Fleet Pressure Index (OFPI).
+
 **Orbital Risk Authority (ORA)** is an independent initiative focused on measuring orbital risk, debris accountability, and space safety for governments, insurers, and satellite operators.
 
 The core metric is the **Orbital Risk Index (ORI)** – a structured scoring framework for:
