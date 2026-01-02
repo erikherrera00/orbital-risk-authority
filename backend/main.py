@@ -160,9 +160,9 @@ class OperatorRisk(BaseModel):
 
 
 class OraVersion(BaseModel):
-    api_version="0.3.0",
-    ori_version="ORI-0.3",
-    prototype_stage="Public prototype - PPI, OFPI, and LEO sub-band congestion"
+    api_version: str
+    ori_version: str
+    prototype_stage: str
 
 
 @app.get("/ori/operators", response_model=List[OperatorRisk], tags=["ori"])
