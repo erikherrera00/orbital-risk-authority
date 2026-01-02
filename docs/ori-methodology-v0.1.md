@@ -48,12 +48,11 @@ OFPI is a 0–100 scale used in v0.1 to represent relative system impact based p
 on fleet dominance — i.e., how large an operator’s active satellite presence is compared
 to other major operators in similar regimes.
 
-In this prototype, OFPI is derived from relative fleet size only. Future versions will
-incorporate additional meaningful indicators including:
-- deployment velocity
-- disposal performance and post-mission compliance
-- transparency and data sharing behavior
-- historical failure / fragmentation contribution
+In this prototype, OFPI is illustrated using notional operator archetypes (e.g., a large
+LEO broadband constellation, a regional imaging / IoT constellation, a MEO navigation
+system, and a GEO communications operator) with approximate fleet sizes. The goal is to
+demonstrate how relative fleet dominance can be surfaced, without assigning ratings to
+specific real-world entities at this stage.
 
 This allows ORA to evolve toward an accountability-aware framework without prematurely
 assigning policy-driven judgment values.
