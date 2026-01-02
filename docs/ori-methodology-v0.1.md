@@ -19,6 +19,28 @@ The Orbital Risk Index (ORI) is designed to:
 
 ORI is **not** a physics simulation engine. It is a **scoring framework** that integrates existing physical models, catalogs, and behavioral data into interpretable metrics.
 
+## LEO Sub-Band Congestion (v0.3)
+
+To avoid treating Low Earth Orbit as a single homogeneous environment, ORA v0.3
+introduces a sub-band view. LEO is divided into illustrative altitude zones
+(e.g., 300–500 km, 500–800 km, 800–1200 km), each assigned:
+
+- an estimated object population
+- a Zone Pressure Index (ZPI), normalized 0–100
+- qualitative interpretation context
+
+This allows ORA to highlight:
+
+- clustering effects
+- how congestion differs by altitude
+- where persistence risk increases due to slower decay
+
+Values remain illustrative in this prototype, but reflect real-world distribution
+patterns where mid-LEO regions carry the highest density while higher LEO altitudes
+retain objects longer.
+
+Future versions will refine these values using structured SSA datasets.
+
 ---
 
 ## 2. Scope and Levels of the Index
