@@ -184,10 +184,30 @@ def get_operator_fleet_pressure():
     fleet dominance in orbit.
     """
     operator_fleets = [
-        ("MockSat Constellations Inc.", "LEO", 5000, "Large-scale broadband constellation."),
-        ("OrbitNav Systems", "MEO", 2000, "Global navigation satellite operator."),
-        ("GeoComms Global", "GEO", 450, "Commercial communications operator."),
-        ("RegionalSat Services", "LEO", 300, "Regional imaging and communications provider."),
+        (
+            "LEO Broadband Constellation A",
+            "LEO",
+            5500,
+            "Large-scale LEO broadband constellation with aggressive deployment pace.",
+        ),
+        (
+            "LEO Imaging & IoT Constellation B",
+            "LEO",
+            900,
+            "Mixed imaging / IoT constellation with moderate fleet size.",
+        ),
+        (
+            "Global Navigation System C",
+            "MEO",
+            180,
+            "Core navigation constellation deployed in MEO.",
+        ),
+        (
+            "GEO Comms Operator D",
+            "GEO",
+            80,
+            "Commercial GEO communications operator with long-lived assets.",
+        ),
     ]
 
     max_fleet = max(o[2] for o in operator_fleets)
