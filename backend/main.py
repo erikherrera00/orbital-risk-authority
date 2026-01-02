@@ -76,6 +76,12 @@ class OperatorRisk(BaseModel):
     notes: str
 
 
+class OraVersion(BaseModel):
+    api_version: str
+    ori_version: str
+    prototype_stage: str
+
+
 @app.get("/", tags=["system"])
 def root():
     return {
@@ -174,6 +180,15 @@ def get_operator_risk():
             notes="Primarily GEO assets with standard graveyard orbit disposal practices.",
         ),
     ]
+
+
+@app.get("/version", response_model=OraVersion)
+def get_version():
+    return OraVersion(
+        api_version="0.2.0",
+        ori_version="ORI-0.2",
+        prototype_stage="Public prototype – band-level PPI + operator OFPI"
+    )
 
 
 @app.get("/ori/operators", response_model=List[OperatorRisk], tags=["ori"])
