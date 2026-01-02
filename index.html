@@ -190,6 +190,15 @@
       Breaking LEO into altitude zones highlights where congestion and persistence risk concentrate.
     </p>
 
+    <h2>Active LEO Snapshot (Real Data)</h2>
+    <p style="color:#9ca3af; font-size:0.9rem;">
+      This count is derived from a CelesTrak active-satellites CSV snapshot, filtered using a
+      standard Low Earth Orbit (LEO) mean-motion / eccentricity definition.
+    </p>
+    <div id="ora-active-leo" style="margin-top:0.5rem; font-size:0.95rem;">
+      Loading active LEO data…
+    </div>
+
     <div id="ori-leo-zones" style="margin-top:0.75rem; font-size:0.95rem;">
       Loading LEO sub-band data…
     </div>
@@ -303,6 +312,28 @@ async function loadVersion() {
 }
 
 
+async function loadActiveLEO() {
+  const target = document.getElementById("ora-active-leo");
+  if (!target) return;
+
+  try {
+    const res = await fetch(ORA_API_BASE + "/ori/active-leo");
+    if (!res.ok) {
+      target.textContent = "Unable to load active LEO snapshot.";
+      return;
+    }
+
+    const data = await res.json();
+    target.textContent =
+      `Active LEO satellites: ${data.leo_active_count.toLocaleString()} ` +
+      `(snapshot: ${data.snapshot_time_utc})`;
+  } catch (err) {
+    console.error(err);
+    target.textContent = "Unable to load active LEO snapshot.";
+  }
+}
+
+
 async function loadLEOZones() {
   const target = document.getElementById("ori-leo-zones");
   if (!target) return;
@@ -392,6 +423,7 @@ document.addEventListener("DOMContentLoaded", () => {
     loadGlobalRiskSummary();
     loadOperatorRisk();
     loadLEOZones();
+    LoadActiveLEO();
     loadVersion();
   });
 </script>
