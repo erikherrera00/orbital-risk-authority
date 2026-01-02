@@ -220,6 +220,9 @@
           A simple API endpoint exposes a mocked global risk summary aligned with the ORI v0.1
           structure, suitable for driving early dashboards and integrations.
         </p>
+        <footer style="margin-top:3rem; color:#6b7280; font-size:0.8rem;">
+          <div id="ora-version">Fetching ORA version…</div>
+        </footer>
         <p>
           <code>/ori/global-summary</code>
         </p>
@@ -273,6 +276,25 @@
 
   document.addEventListener("DOMContentLoaded", loadGlobalRiskSummary);
 
+async function loadVersion() {
+  const el = document.getElementById("ora-version");
+  if (!el) return;
+
+  try {
+    const res = await fetch(ORA_API_BASE + "/version");
+    if (!res.ok) {
+      el.textContent = "ORA version unavailable.";
+      return;
+    }
+
+    const data = await res.json();
+    el.textContent = `ORA ${data.ori_version} — API ${data.api_version} — ${data.prototype_stage}`;
+  } catch {
+    el.textContent = "ORA version unavailable.";
+  }
+}
+
+
 async function loadOperatorRisk() {
   const target = document.getElementById("ori-operators");
   if (!target) return;
@@ -318,6 +340,7 @@ async function loadOperatorRisk() {
 document.addEventListener("DOMContentLoaded", () => {
     loadGlobalRiskSummary();
     loadOperatorRisk();
+    loadVersion();
   });
 </script>
 
