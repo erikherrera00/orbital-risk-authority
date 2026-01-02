@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List
+
 import catalog
 
 app = FastAPI(
@@ -91,22 +92,6 @@ class ActiveLEOSummary(BaseModel):
     leo_active_count: int
 
 
-@app.get("/ori/active-leo", response_model=ActiveLEOSummary, tags=["ori"])
-def get_active_leo_summary():
-    """
-    Real-data snapshot: count of active LEO satellites based on CelesTrak CSV.
-    """
-    objects = catalog.load_active_catalog()
-    leo_count = catalog.count_active_leo(objects)
-    snapshot_time = catalog.get_snapshot_timestamp_iso()
-
-    return ActiveLEOSummary(
-        data_source="CelesTrak active satellites CSV snapshot (GROUP=active, FORMAT=csv)",
-        snapshot_time_utc=snapshot_time,
-        leo_active_count=leo_count,
-    )
-
-
 @app.get("/", tags=["system"])
 def root():
     return {
@@ -186,6 +171,22 @@ class OraVersion(BaseModel):
     api_version: str
     ori_version: str
     prototype_stage: str
+
+
+@app.get("/ori/active-leo", response_model=ActiveLEOSummary, tags=["ori"])
+def get_active_leo_summary():
+    """
+    Real-data snapshot: count of active LEO satellites based on CelesTrak CSV.
+    """
+    objects = catalog.load_active_catalog()
+    leo_count = catalog.count_active_leo(objects)
+    snapshot_time = catalog.get_snapshot_timestamp_iso()
+
+    return ActiveLEOSummary(
+        data_source="CelesTrak active satellites CSV snapshot (GROUP=active, FORMAT=csv)",
+        snapshot_time_utc=snapshot_time,
+        leo_active_count=leo_count,
+    )
 
 
 @app.get("/ori/operators", response_model=List[OperatorRisk], tags=["ori"])
