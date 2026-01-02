@@ -284,18 +284,18 @@ async function loadOperatorRisk() {
     html += "<table style='width:100%; border-collapse:collapse; margin-top:0.75rem; font-size:0.9rem;'>";
     html += "<thead><tr>";
     html += "<th style='text-align:left; padding:0.4rem 0;'>Operator</th>";
-    html += "<th style='text-align:left; padding:0.4rem 0;'>Orbit Band</th>";
     html += "<th style='text-align:left; padding:0.4rem 0;'>Fleet Size</th>";
-    html += "<th style='text-align:left; padding:0.4rem 0;'>Fleet Pressure</th>";
+    html += "<th style='text-align:left; padding:0.4rem 0;'>Risk Score</th>";
+    html += "<th style='text-align:left; padding:0.4rem 0;'>Risk Level</th>";
     html += "<th style='text-align:left; padding:0.4rem 0;'>Notes</th>";
     html += "</tr></thead><tbody>";
 
     for (const op of data) {
       html += "<tr>";
       html += `<td style='padding:0.3rem 0;'>${op.operator_name}</td>`;
-      html += `<td style='padding:0.3rem 0;'>${op.orbit_band}</td>`;
       html += `<td style='padding:0.3rem 0;'>${op.fleet_size}</td>`;
-      html += `<td style='padding:0.3rem 0;'>${op.fleet_pressure_index.toFixed(1)}</td>`;
+      html += `<td style='padding:0.3rem 0;'>${op.risk_score.toFixed(1)}</td>`;
+      html += `<td style='padding:0.3rem 0;'>${op.risk_level}</td>`;
       html += `<td style='padding:0.3rem 0;'>${op.notes}</td>`;
       html += "</tr>";
     }
@@ -309,7 +309,9 @@ async function loadOperatorRisk() {
   }
 }
 
-document.addEventListener("DOMContentLoaded", loadOperatorRisk);
-
+document.addEventListener("DOMContentLoaded", () => {
+    loadGlobalRiskSummary();
+    loadOperatorRisk();
+  });
 </script>
 
