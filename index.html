@@ -184,6 +184,15 @@
     <div id="ori-operators" style="margin-top:0.75rem; font-size:0.95rem;">
       Loading operator fleet pressure…
     </div>
+    
+    <h2>Live prototype: LEO Sub-Band Congestion</h2>
+    <p style="color:#9ca3af; font-size:0.9rem;">
+      Breaking LEO into altitude zones highlights where congestion and persistence risk concentrate.
+    </p>
+
+    <div id="ori-leo-zones" style="margin-top:0.75rem; font-size:0.95rem;">
+      Loading LEO sub-band data…
+    </div>
 
     <h2>Key documents (prototype)</h2>
     <div class="grid">
@@ -294,6 +303,49 @@ async function loadVersion() {
 }
 
 
+async function loadLEOZones() {
+  const target = document.getElementById("ori-leo-zones");
+  if (!target) return;
+
+  try {
+    const res = await fetch(ORA_API_BASE + "/ori/leo-zones");
+    if (!res.ok) {
+      target.textContent = "Unable to load LEO zone data.";
+      return;
+    }
+
+    const data = await res.json();
+
+    let html = "";
+    html += "<table style='width:100%; border-collapse:collapse; margin-top:0.75rem; font-size:0.9rem;'>";
+    html += "<thead><tr>";
+    html += "<th>Zone</th>";
+    html += "<th>Altitude</th>";
+    html += "<th>Objects (est.)</th>";
+    html += "<th>Zone Pressure</th>";
+    html += "<th>Notes</th>";
+    html += "</tr></thead><tbody>";
+
+    for (const z of data) {
+      html += "<tr>";
+      html += `<td>${z.zone_label}</td>`;
+      html += `<td>${z.altitude_range_km}</td>`;
+      html += `<td>${z.estimated_object_count}</td>`;
+      html += `<td>${z.zone_pressure_index.toFixed(1)}</td>`;
+      html += `<td>${z.notes}</td>`;
+      html += "</tr>";
+    }
+
+    html += "</tbody></table>";
+    target.innerHTML = html;
+
+  } catch (err) {
+    console.error(err);
+    target.textContent = "Unable to load LEO sub-band congestion.";
+  }
+}
+
+
 async function loadOperatorRisk() {
   const target = document.getElementById("ori-operators");
   if (!target) return;
@@ -339,6 +391,7 @@ async function loadOperatorRisk() {
 document.addEventListener("DOMContentLoaded", () => {
     loadGlobalRiskSummary();
     loadOperatorRisk();
+    loadLEOZones();
     loadVersion();
   });
 </script>
