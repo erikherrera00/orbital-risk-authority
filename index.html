@@ -316,6 +316,20 @@
       html += "<th style='text-align:left; padding:0.4rem 0;'>Population Pressure</th>";
       html += "<th style='text-align:left; padding:0.4rem 0;'>Notes</th>";
       html += "</tr></thead><tbody>";
+      
+      const overallScore =
+        payload.overall_risk_score ??
+        payload.overall_score ??
+        payload.risk_score ??
+        payload.overall?.score ??
+        null;
+
+      const overallLevel =
+        payload.overall_risk_level ??
+        payload.overall_level ??
+        payload.risk_level ??
+        payload.overall?.level ??
+        null;
 
       for (const band of data.orbit_bands) {
         html += "<tr>";
@@ -325,6 +339,13 @@
         html += `<td style='padding:0.3rem 0;'>${band.notes}</td>`;
         html += "</tr>";
       }
+      
+      const scoreText = overallScore === null ? "—" : Number(overallScore).toFixed(1);
+      const levelText = overallLevel ?? "—";
+
+      html += `<div style="margin:0.25rem 0 0.75rem 0; color:#e5e7eb;">
+        <strong>Overall Risk Score:</strong> ${scoreText} (${levelText})
+      </div>`;
 
       html += "</tbody></table>";
       target.innerHTML = html;
