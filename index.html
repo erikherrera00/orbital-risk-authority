@@ -459,6 +459,7 @@ async function loadLEOZones() {
   const target = document.getElementById("ori-leo-zones");
   if (!target) {
     console.error("Missing element: #ori-leo-zones");
+    console.log("loadLEOZones() called");
     return;
   }
 
@@ -477,6 +478,7 @@ async function loadLEOZones() {
     }
 
     const payload = await res.json();
+    console.log("LEO zones payload:", payload);
 
     // payload shape: { data_source, snapshot_time_utc, zones: [...] }
     const zones = Array.isArray(payload.zones) ? payload.zones : [];
@@ -525,7 +527,7 @@ async function loadLEOZones() {
     target.innerHTML = html;
   } catch (err) {
     console.error("loadLEOZones failed:", err);
-    target.textContent = "Unable to load LEO sub-band congestion (see console).";
+    target.textContent = 'LEO sub-band failed: ${err?.message || err}';
   }
 }
 
@@ -574,24 +576,11 @@ async function loadOperatorRisk() {
 
 
 document.addEventListener("DOMContentLoaded", () => {
-  const fns = [
-    loadGlobalRiskSummary,
-    loadOperatorRisk,
-    loadActiveLEO,
-    loadLEOZones,
-    loadVersion,
-  ];
-
-  for (const fn of fns) {
-    try {
-      const result = fn();
-      if (result && typeof result.then === "function") {
-        result.catch((e) => console.error("Async init error:", e));
-      }
-    } catch (e) {
-      console.error("Init error:", e);
-    }
-  }
+  try { loadGlobalRiskSummary(); } catch (e) { console.error(e); }
+  try { loadOperatorRisk(); } catch (e) { console.error(e); }
+  try { loadActiveLEO(); } catch (e) { console.error(e); }
+  try { loadLEOZones(); } catch (e) { console.error(e); }
+  try { loadVersion(); } catch (e) { console.error(e); }
 });
 
 </script>
