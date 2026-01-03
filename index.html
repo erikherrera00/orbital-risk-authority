@@ -376,56 +376,70 @@ async function loadActiveLEO() {
 
 async function loadLEOZones() {
   const target = document.getElementById("ori-leo-zones");
-  if (!target) return;
+  if (!target) {
+    console.error("Missing element: #ori-leo-zones");
+    return;
+  }
+
+  // show immediate status so you know it ran
+  target.textContent = "Loading LEO sub-band congestion…";
 
   try {
-    // Use REAL endpoint
     const res = await fetch(ORA_API_BASE + "/ori/leo-zones-real");
     if (!res.ok) {
-      target.textContent = "Unable to load LEO zone data.";
+      target.textContent = `Unable to load LEO zone data (HTTP ${res.status}).`;
       return;
     }
 
     const payload = await res.json();
-    const data = payload.zones || [];
+
+    // payload shape: { data_source, snapshot_time_utc, zones: [...] }
+    const zones = Array.isArray(payload.zones) ? payload.zones : [];
     const snapshot = payload.snapshot_time_utc || "unknown";
 
-    let html = "";
-    html += "<div style='margin:0.25rem 0 0.75rem 0; color:#9ca3af; font-size:0.85rem;'>";
-    html += `Source: CelesTrak active satellites snapshot · Snapshot: ${snapshot}`;
-    html += "</div>";
-
-    html += "<table style='width:100%; border-collapse:collapse; margin-top:0.5rem; font-size:0.9rem;'>";
-    html += "<thead><tr>";
-    html += "<th style='text-align:left; padding:0.4rem 0;'>Zone</th>";
-    html += "<th style='text-align:left; padding:0.4rem 0;'>Altitude</th>";
-    html += "<th style='text-align:left; padding:0.4rem 0;'>Active Objects</th>";
-    html += "<th style='text-align:left; padding:0.4rem 0;'>ZPI (0–100)</th>";
-    html += "</tr></thead><tbody>";
-
-    for (const z of data) {
-      const count = Number(z.estimated_object_count || 0);
-      const zpi = Number(z.zone_pressure_index || 0);
-
-      html += "<tr>";
-      html += `<td style='padding:0.3rem 0;'>${z.zone_label}</td>`;
-      html += `<td style='padding:0.3rem 0;'>${z.altitude_range_km}</td>`;
-      html += `<td style='padding:0.3rem 0;'>${count.toLocaleString()}</td>`;
-      html += `<td style='padding:0.3rem 0;'>${zpi.toFixed(1)}</td>`;
-      html += "</tr>";
+    if (!zones.length) {
+      target.textContent = "LEO zone data returned empty zones array.";
+      console.warn("leo-zones-real payload:", payload);
+      return;
     }
 
-    html += "</tbody></table>";
+    let html = "";
+    html += `<div style="margin:0.25rem 0 0.75rem 0; color:#9ca3af; font-size:0.85rem;">`;
+    html += `Source: CelesTrak active satellites snapshot · Snapshot: ${snapshot}`;
+    html += `</div>`;
 
-    // Optional: add one-line method note (high credibility, low noise)
-    html += "<div style='margin-top:0.6rem; color:#9ca3af; font-size:0.85rem;'>";
-    html += "Method: mean-motion → approximate altitude; binned into sub-bands; ZPI normalized within LEO.";
-    html += "</div>";
+    html += `<table style="width:100%; border-collapse:collapse; margin-top:0.5rem; font-size:0.9rem;">`;
+    html += `<thead><tr>`;
+    html += `<th style="text-align:left; padding:0.4rem 0;">Zone</th>`;
+    html += `<th style="text-align:left; padding:0.4rem 0;">Altitude</th>`;
+    html += `<th style="text-align:left; padding:0.4rem 0;">Active Objects</th>`;
+    html += `<th style="text-align:left; padding:0.4rem 0;">ZPI (0–100)</th>`;
+    html += `</tr></thead><tbody>`;
+
+    for (const z of zones) {
+      const label = z.zone_label ?? "";
+      const alt = z.altitude_range_km ?? "";
+      const count = Number(z.estimated_object_count ?? 0);
+      const zpi = Number(z.zone_pressure_index ?? 0);
+
+      html += `<tr>`;
+      html += `<td style="padding:0.3rem 0;">${label}</td>`;
+      html += `<td style="padding:0.3rem 0;">${alt}</td>`;
+      html += `<td style="padding:0.3rem 0;">${count.toLocaleString()}</td>`;
+      html += `<td style="padding:0.3rem 0;">${zpi.toFixed(1)}</td>`;
+      html += `</tr>`;
+    }
+
+    html += `</tbody></table>`;
+
+    html += `<div style="margin-top:0.6rem; color:#9ca3af; font-size:0.85rem;">`;
+    html += `Method: mean-motion → approximate altitude; binned into sub-bands; ZPI normalized within LEO.`;
+    html += `</div>`;
 
     target.innerHTML = html;
   } catch (err) {
-    console.error(err);
-    target.textContent = "Unable to load LEO sub-band congestion.";
+    console.error("loadLEOZones failed:", err);
+    target.textContent = "Unable to load LEO sub-band congestion (see console).";
   }
 }
 
