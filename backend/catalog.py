@@ -69,6 +69,45 @@ def count_active_leo(objects: List[CatalogRow]) -> int:
     return count
 
 
+def classify_regime(mean_motion_rev_per_day: float, eccentricity: float) -> str | None:
+    """
+    Classify orbit regime using mean motion and eccentricity.
+    This is approximate and intended for high-level regime grouping.
+
+    - LEO: mean_motion >= 11.25 and ecc < 0.25
+    - GEO: mean_motion roughly 1 rev/day (geosynchronous), ecc small
+    - MEO: between GEO and LEO, ecc small
+    """
+    if mean_motion_rev_per_day <= 0:
+        return None
+
+    # We keep the same LEO definition you already adopted.
+    if mean_motion_rev_per_day >= 11.25 and eccentricity < 0.25:
+        return "LEO"
+
+    # GEO: mean motion near 1 rev/day.
+    # Allow a tolerance band because station-keeping and inclination drift.
+    if 0.95 <= mean_motion_rev_per_day <= 1.05 and eccentricity < 0.25:
+        return "GEO"
+
+    # MEO: between GEO and LEO (roughly).
+    if 1.05 < mean_motion_rev_per_day < 11.25 and eccentricity < 0.25:
+        return "MEO"
+
+    return None
+
+
+def count_active_regimes(objects: List[CatalogRow]) -> Dict[str, int]:
+    counts = {"LEO": 0, "MEO": 0, "GEO": 0}
+
+    for obj in objects:
+        regime = classify_regime(obj.mean_motion, obj.eccentricity)
+        if regime in counts:
+            counts[regime] += 1
+
+    return counts
+
+
 def get_snapshot_timestamp_iso() -> str:
     """
     Return the last-modified time of the snapshot file in ISO 8601 UTC.

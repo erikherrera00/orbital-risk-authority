@@ -143,6 +143,9 @@ def get_global_risk_summary():
     orbit_bands = []
 
     for band_name, risk_score, risk_level, notes in band_definitions:
+        objects = catalog.load_active_catalog()
+        counts = catalog.count_active_regimes(objects)
+
         obj_count = BAND_OBJECT_COUNTS.get(band_name, 0)
         ppi = compute_population_pressure(obj_count)
 
@@ -171,6 +174,14 @@ class OperatorRisk(BaseModel):
     risk_level: str
     fleet_size: int
     notes: str
+
+
+class ActiveRegimeSummary(BaseModel):
+    data_source: str
+    snapshot_time_utc: str
+    leo_active: int
+    meo_active: int
+    geo_active: int
 
 
 class OraVersion(BaseModel):
@@ -333,6 +344,21 @@ def get_leo_zone_risk_real():
         data_source="CelesTrak active satellites CSV snapshot (GROUP=active, FORMAT=csv)",
         snapshot_time_utc=snapshot_time,
         zones=zones,
+    )
+
+
+@app.get("/ori/active-regimes", response_model=ActiveRegimeSummary, tags=["ori"])
+def get_active_regimes():
+    objects = catalog.load_active_catalog()
+    snapshot_time = catalog.get_snapshot_timestamp_iso()
+    counts = catalog.count_active_regimes(objects)
+
+    return ActiveRegimeSummary(
+        data_source="CelesTrak active satellites CSV snapshot (GROUP=active, FORMAT=csv)",
+        snapshot_time_utc=snapshot_time,
+        leo_active=counts["LEO"],
+        meo_active=counts["MEO"],
+        geo_active=counts["GEO"],
     )
 
 
