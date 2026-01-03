@@ -403,22 +403,54 @@ async function loadVersion() {
 
 async function loadActiveLEO() {
   const target = document.getElementById("ora-active-leo");
-  if (!target) return;
+  if (!target) {
+    console.error("Missing element: #ora-active-leo");
+    return;
+  }
+
+  // Always show something immediately
+  target.textContent = "Loading active LEO snapshot…";
 
   try {
     const res = await fetch(ORA_API_BASE + "/ori/active-leo");
     if (!res.ok) {
-      target.textContent = "Unable to load active LEO snapshot.";
+      target.textContent = `Unable to load active LEO snapshot (HTTP ${res.status}).`;
       return;
     }
 
     const data = await res.json();
-    target.textContent =
-      `Active LEO satellites: ${data.leo_active_count.toLocaleString()} ` +
-      `(snapshot: ${data.snapshot_time_utc})`;
+
+    const rawCount =
+      data.leo_active_count ??
+      data.active_leo_count ??
+      data.count ??
+      null;
+
+    const snapshot =
+      data.snapshot_time_utc ??
+      data.snapshot ??
+      "unknown";
+
+    if (rawCount === null) {
+      target.textContent = "Active LEO loaded but count field not found.";
+      console.warn("active-leo payload:", data);
+      return;
+    }
+
+    const countNum = Number(rawCount);
+    const countText = Number.isFinite(countNum) ? countNum.toLocaleString() : String(rawCount);
+
+    target.innerHTML = `
+      <div style="font-size:1.05rem; color:#e5e7eb;">
+        <strong>Active LEO satellites:</strong> ${countText}
+      </div>
+      <div style="margin-top:0.35rem; color:#9ca3af; font-size:0.85rem;">
+        Snapshot: ${snapshot} · Source: CelesTrak active catalog
+      </div>
+    `;
   } catch (err) {
-    console.error(err);
-    target.textContent = "Unable to load active LEO snapshot.";
+    console.error("loadActiveLEO failed:", err);
+    target.textContent = "Unable to load active LEO snapshot (see console).";
   }
 }
 
