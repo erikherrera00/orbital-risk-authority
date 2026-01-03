@@ -88,6 +88,23 @@
     .btn-primary {
       border-color: #93c5fd;
     }
+    .data-integrity {
+      background: #0f172a;
+      border: 1px solid #1e293b;
+      border-radius: 6px;
+      padding: 1rem;
+      margin: 1.5rem 0;
+      font-size: 0.95rem;
+    }
+
+    .data-integrity h3 {
+      margin-top: 0;
+      font-size: 1.05rem;
+    }
+
+    .data-integrity ul {
+      padding-left: 1.2rem;
+    }
     footer {
       margin-top: 3rem;
       padding: 1.5rem;
@@ -126,9 +143,19 @@
       and responsible risk assessment.
     </p>
     
+    <section class="data-integrity">
+      <h3>Data Integrity Status</h3>
+      <ul>
+        <li>✅ Active LEO population — <strong>Real data</strong> (CelesTrak snapshot)</li>
+        <li>✅ LEO sub-band congestion — <strong>Real data</strong> (derived from snapshot)</li>
+        <li>⚠️ Operator Fleet Pressure Index (OFPI) — <strong>Illustrative archetypes</strong></li>
+        <li>⚠️ ORI risk scores — <strong>Framework-driven, not predictive</strong></li>
+      </ul>
+    </section>
+
     <p style="margin-top:0.25rem; font-size:0.8rem; color:#9ca3af;">
       ORA Prototype <strong>v0.3</strong> – band-level Population Pressure Index (PPI),
-      archetypal Operator Fleet Presure Index (OFPI), and LEO sub-band congestion.
+      archetypal Operator Fleet Pressure Index (OFPI), and LEO sub-band congestion.
     </p>
 
 
@@ -169,11 +196,15 @@
     <h2>Live prototype: Global ORI snapshot</h2>
     <p style="color:#9ca3af; font-size:0.9rem;">
       The table below is populated from the ORA prototype API endpoint
-      <code>/ori/global-summary</code>, using mocked but structured data aligned with the ORI v0.1 framework.
+      <code>/ori/global-summary</code>, using mocked but structured data aligned with the ORI v0.3 framework.
     </p>
     <div id="ori-global-summary" style="margin-top:0.75rem; font-size:0.95rem;">
       Loading global orbital risk summary…
     </div>
+    <p class="subtle-note">
+      Risk scores are illustrative and framework-driven. Population counts and congestion
+      metrics are derived from real public SSA data where indicated.
+    </p>
 
     <h2>Live prototype: Operator Fleet Pressure</h2>
     <p style="color:#9ca3af; font-size:0.9rem;">
@@ -202,7 +233,10 @@
     <div id="ori-leo-zones" style="margin-top:0.75rem; font-size:0.95rem;">
       Loading LEO sub-band data…
     </div>
-
+    <p class="subtle-note">
+      Source: CelesTrak Active Satellites Catalog (GROUP=active, FORMAT=csv).
+      Snapshot-based; updated manually to avoid live-feed abuse.
+    </p>
     <h2>Key documents (prototype)</h2>
     <div class="grid">
       <div class="card">
@@ -222,7 +256,7 @@
       <div class="card">
         <div class="badge">Global Snapshot</div>
         <p>
-          The <strong>Global Orbital Risk Snapshot – 2026 (v0.1)</strong> provides an illustrative
+          The <strong>Global Orbital Risk Snapshot – 2026 (v0.3)</strong> provides an illustrative
           view of LEO, MEO, and GEO risk levels using the prototype ORI framework.
         </p>
         <p>
@@ -235,7 +269,7 @@
       <div class="card">
         <div class="badge">API Prototype</div>
         <p>
-          A simple API endpoint exposes a mocked global risk summary aligned with the ORI v0.1
+          A simple API endpoint exposes a mocked global risk summary aligned with the ORI v0.3
           structure, suitable for driving early dashboards and integrations.
         </p>
         <p>
@@ -243,8 +277,17 @@
         </p>
       </div>
     </div>
+    <section class="contact">
+      <h3>Early Review & Collaboration</h3>
+      <p>
+        ORA is under active development. For early review, feedback, or pilot discussions:
+        <strong>orbitalriskauthority@proton.me</strong>
+      </p>
+    </section>
     <footer style="margin-top:3rem; color:#6b7280; font-size:0.8rem;">
-      <div id="ora-version">Fetching ORA version…</div>
+      <p>
+        Orbital Risk Authority - ORA v0.3 · ORI v0.3 · API <span id="api-version">loading</span>
+      </p>
     </footer>
 <script>
   // Use your actual Render URL here:
