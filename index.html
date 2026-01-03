@@ -221,8 +221,8 @@
 
     <h2>Live prototype: Global ORI snapshot</h2>
     <p style="color:#9ca3af; font-size:0.9rem;">
-      The table below is populated from the ORA prototype API endpoint
-      <code>/ori/global-summary</code>, using mocked but structured data aligned with the ORI v0.3 framework.
+      The table below is populated from the ORA prototype API
+      <code>/ori/global-summary</code>, ORI scores areframework-driven (not predictive).Population and congestion fields use real snapshot-derived values where indicated."
     </p>
     <div id="ori-global-summary" style="margin-top:0.75rem; font-size:0.95rem;">
       Loading global orbital risk summary…
@@ -246,7 +246,7 @@
     
     <div id="ori-leo-zones">Loading LEO sub-band congestion…</div>
     <p class="subtle-note">
-      Source: CelestTrak Active Satellites Catalog (GROUP=active, FORMAT=csv).
+      Source: CelesTrak Active Satellites Catalog (GROUP=active, FORMAT=csv).
       Snapshot-based; updated manually to avoid live-feed abuse.
     </p>
     <h2>Active LEO Snapshot (Real Data)</h2>
@@ -303,13 +303,11 @@
         ORA is under active development. For early review, feedback, or pilot discussions:
         <strong>orbitalriskauthority@proton.me</strong>
       </p>
-      <a href="#leo-sub-band" class="pill">LEO Sub-Bands</a>
-      <h2 id="leo-sub-band">Live prototype: LEO Sub-Band Congestion</h2>
     </section>
     <div id="ora-version">Fetching ORA version…</div>
     <footer style="margin-top:3rem; color:#6b7280; font-size:0.8rem;">
       <p>
-        Orbital Risk Authority - ORA v0.3 · ORI v0.3 · API <span id="api-version">loading</span>
+        Orbital Risk Authority - ORA v0.3 · ORI v0.3 · API <span id="api-version">Render</span>
       </p>
     </footer>
 <script>
