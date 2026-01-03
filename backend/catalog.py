@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import List, Dict, Any
 import math
 from typing import Tuple
+from functools import lru_cache
 
 DATA_FILE = Path(__file__).parent / "data" / "active-satellites.csv"
 
@@ -16,6 +17,15 @@ class CatalogRow:
     object_name: str
     mean_motion: float
     eccentricity: float
+
+
+@lru_cache(maxsize=1)
+def load_active_catalog_cached() -> List[CatalogRow]:
+    return load_active_catalog()
+
+
+def clear_catalog_cache() -> None:
+    load_active_catalog_cached.cache_clear()
 
 
 def load_active_catalog() -> List[CatalogRow]:
@@ -197,3 +207,32 @@ def count_active_leo_zones(objects: List[CatalogRow]) -> Dict[str, Dict[str, int
         zones[label]["count"] += 1
 
     return zones
+
+
+def classify_regime(mean_motion_rev_per_day: float, eccentricity: float) -> str | None:
+    if mean_motion_rev_per_day <= 0:
+        return None
+
+    # LEO definition you already use
+    if mean_motion_rev_per_day >= 11.25 and eccentricity < 0.25:
+        return "LEO"
+
+    # GEO ~ 1 rev/day
+    if 0.95 <= mean_motion_rev_per_day <= 1.05 and eccentricity < 0.25:
+        return "GEO"
+
+    # MEO between GEO and LEO
+    if 1.05 < mean_motion_rev_per_day < 11.25 and eccentricity < 0.25:
+        return "MEO"
+
+    return None
+
+
+def count_active_regimes(objects: List[CatalogRow]) -> dict[str, int]:
+    counts = {"LEO": 0, "MEO": 0, "GEO": 0}
+    for obj in objects:
+        regime = classify_regime(obj.mean_motion, obj.eccentricity)
+        if regime in counts:
+            counts[regime] += 1
+    return counts
+
