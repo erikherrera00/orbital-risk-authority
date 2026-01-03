@@ -92,6 +92,12 @@ class ActiveLEOSummary(BaseModel):
     leo_active_count: int
 
 
+class LEOZoneRealSummary(BaseModel):
+    data_source: str
+    snapshot_time_utc: str
+    zones: List[LEOZoneRisk]
+
+
 @app.get("/", tags=["system"])
 def root():
     return {
@@ -287,6 +293,48 @@ def get_operator_fleet_pressure():
                 notes=notes,
             )
         )
+
+
+@app.get("/ori/leo-zones-real", response_model=LEOZoneRealSummary, tags=["ori"])
+def get_leo_zone_risk_real():
+    """
+    Real-data snapshot: active LEO satellites binned into altitude zones.
+    Uses mean motion -> altitude approximation for near-circular orbits.
+    """
+    objects = catalog.load_active_catalog()
+    snapshot_time = catalog.get_snapshot_timestamp_iso()
+    zone_counts = catalog.count_active_leo_zones(objects)
+
+    # Build list of zones in order
+    ordered_labels = ["LEO-1", "LEO-2", "LEO-3", "LEO-4"]
+    zones = []
+    max_count = max((zone_counts.get(z, {}).get("count", 0) for z in ordered_labels), default=0)
+
+    for label in ordered_labels:
+        info = zone_counts.get(label, {"count": 0, "range": ""})
+        count = info["count"]
+        rng = info["range"]
+
+        zpi = 0.0
+        if max_count > 0:
+            zpi = round(min(100.0, (count / max_count) * 100.0), 1)
+
+        zones.append(
+            LEOZoneRisk(
+                zone_label=label,
+                altitude_range_km=rng,
+                estimated_object_count=count,
+                zone_pressure_index=zpi,
+                notes="Real-data binning from CelesTrak snapshot (approx altitude from mean motion).",
+            )
+        )
+
+    return LEOZoneRealSummary(
+        data_source="CelesTrak active satellites CSV snapshot (GROUP=active, FORMAT=csv)",
+        snapshot_time_utc=snapshot_time,
+        zones=zones,
+    )
+
 
 @app.get("/ori/leo-zones", response_model=List[LEOZoneRisk], tags=["ori"])
 def get_leo_zone_risk():
