@@ -294,66 +294,88 @@
   const ORA_API_BASE = "https://orbital-risk-authority.onrender.com";  // <-- example, replace
 
   async function loadGlobalRiskSummary() {
-    const target = document.getElementById("ori-global-summary");
-    if (!target) return;
+  const target = document.getElementById("ori-global-summary");
+  if (!target) return;
 
-    try {
-      const res = await fetch(ORA_API_BASE + "/ori/global-summary");
-      if (!res.ok) {
-        target.textContent = "Unable to load ORI global summary (API error).";
-        return;
-      }
-      const data = await res.json();
+  target.textContent = "Loading global ORI snapshot…";
 
-      let html = "";
-      html += `<p><strong>Overall Risk Score:</strong> ${data.overall_risk_score.toFixed(1)} (${data.overall_risk_level})</p>`;
-      html += "<table style='width:100%; border-collapse:collapse; margin-top:0.75rem; font-size:0.9rem;'>";
-      html += "<thead><tr>";
-      html += "<th style='text-align:left; padding:0.4rem 0;'>Orbit Band</th>";
-      html += "<th style='text-align:left; padding:0.4rem 0;'>ORI Score</th>";
-      html += "<th style='text-align:left; padding:0.4rem 0;'>Level</th>";
-      html += "<th style='text-align:left; padding:0.4rem 0;'>Objects (est.)</th>";
-      html += "<th style='text-align:left; padding:0.4rem 0;'>Population Pressure</th>";
-      html += "<th style='text-align:left; padding:0.4rem 0;'>Notes</th>";
-      html += "</tr></thead><tbody>";
-      
-      const overallScore =
-        payload.overall_risk_score ??
-        payload.overall_score ??
-        payload.risk_score ??
-        payload.overall?.score ??
-        null;
-
-      const overallLevel =
-        payload.overall_risk_level ??
-        payload.overall_level ??
-        payload.risk_level ??
-        payload.overall?.level ??
-        null;
-
-      for (const band of data.orbit_bands) {
-        html += "<tr>";
-        html += `<td style='padding:0.3rem 0;'>${band.risk_level}</td>`;
-        html += `<td style='padding:0.3rem 0;'>${band.object_count}</td>`;
-        html += `<td style='padding:0.3rem 0;'>${band.population_pressure_index.toFixed(1)}</td>`;
-        html += `<td style='padding:0.3rem 0;'>${band.notes}</td>`;
-        html += "</tr>";
-      }
-      
-      const scoreText = overallScore === null ? "—" : Number(overallScore).toFixed(1);
-      const levelText = overallLevel ?? "—";
-
-      html += `<div style="margin:0.25rem 0 0.75rem 0; color:#e5e7eb;">
-        <strong>Overall Risk Score:</strong> ${scoreText} (${levelText})
-      </div>`;
-
-      html += "</tbody></table>";
-      target.innerHTML = html;
-    } catch (err) {
-      console.error(err);
-      target.textContent = "Unable to load ORI global summary (network error).";
+  try {
+    const res = await fetch(ORA_API_BASE + "/ori/global-summary");
+    if (!res.ok) {
+      target.textContent = `Unable to load global summary (HTTP ${res.status}).`;
+      return;
     }
+
+    const payload = await res.json(); // ✅ THIS LINE MUST EXIST
+
+    // ✅ Defensive overall fields (won’t crash if missing)
+    const overallScore =
+      payload.overall_risk_score ??
+      payload.overall_score ??
+      payload.risk_score ??
+      payload.overall?.score ??
+      null;
+
+    const overallLevel =
+      payload.overall_risk_level ??
+      payload.overall_level ??
+      payload.risk_level ??
+      payload.overall?.level ??
+      null;
+
+    const bands = payload.bands || payload.orbit_bands || [];
+    if (!Array.isArray(bands) || bands.length === 0) {
+      target.textContent = "Global summary returned no bands.";
+      console.warn("global-summary payload:", payload);
+      return;
+    }
+
+    // ✅ Render
+    let html = "";
+    const scoreText = overallScore === null ? "—" : Number(overallScore).toFixed(1);
+    const levelText = overallLevel ?? "—";
+
+    html += `<div style="margin:0.25rem 0 0.75rem 0; color:#e5e7eb;">
+      <strong>Overall Risk Score:</strong> ${scoreText} (${levelText})
+    </div>`;
+
+    html += `<table style="width:100%; border-collapse:collapse; margin-top:0.5rem; font-size:0.9rem;">
+      <thead><tr>
+        <th style="text-align:left; padding:0.4rem 0;">Orbit Band</th>
+        <th style="text-align:left; padding:0.4rem 0;">ORI Score</th>
+        <th style="text-align:left; padding:0.4rem 0;">Level</th>
+        <th style="text-align:left; padding:0.4rem 0;">Objects</th>
+        <th style="text-align:left; padding:0.4rem 0;">PPI</th>
+        <th style="text-align:left; padding:0.4rem 0;">Notes</th>
+      </tr></thead><tbody>`;
+
+    for (const b of bands) {
+      const band = b.band_name ?? b.orbit_band ?? b.name ?? "—";
+      const score = Number(b.ori_score ?? b.risk_score ?? 0);
+      const level = b.ori_level ?? b.risk_level ?? "—";
+      const objects = Number(b.object_count ?? 0);
+      const ppi = Number(b.population_pressure_index ?? b.ppi ?? 0);
+      const notes = b.notes ?? "";
+
+      html += `<tr>
+        <td style="padding:0.3rem 0;">${band}</td>
+        <td style="padding:0.3rem 0;">${score.toFixed(1)}</td>
+        <td style="padding:0.3rem 0;">${level}</td>
+        <td style="padding:0.3rem 0;">${objects.toLocaleString()}</td>
+        <td style="padding:0.3rem 0;">${ppi.toFixed(1)}</td>
+        <td style="padding:0.3rem 0;">${notes}</td>
+      </tr>`;
+    }
+
+    html += `</tbody></table>`;
+
+    target.innerHTML = html;
+  } catch (e) {
+    console.error("loadGlobalRiskSummary failed:", e);
+    target.textContent = "Unable to load global ORI snapshot (see console).";
   }
+}
+
 
 
 async function loadVersion() {
