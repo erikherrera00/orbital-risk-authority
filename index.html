@@ -215,11 +215,12 @@
     <div id="ori-operators" style="margin-top:0.75rem; font-size:0.95rem;">
       Loading operator fleet pressure…
     </div>
-    
-    <h2>Live prototype: LEO Sub-Band Congestion</h2>
     <p style="color:#9ca3af; font-size:0.9rem;">
-      Breaking LEO into altitude zones highlights where congestion and persistence risk concentrate.
+      Values below are derived from a CelesTrak active-satellites snapshot and represent
+      real active objects binned by approximate altitude. ZPI is a relative congestion index
+      normalized within LEO.
     </p>
+    <h2>Live prototype: LEO Sub-Band Congestion</h2>
 
     <h2>Active LEO Snapshot (Real Data)</h2>
     <p style="color:#9ca3af; font-size:0.9rem;">
@@ -382,37 +383,50 @@ async function loadLEOZones() {
   if (!target) return;
 
   try {
-    const res = await fetch(ORA_API_BASE + "/ori/leo-zones");
+    // Use REAL endpoint
+    const res = await fetch(ORA_API_BASE + "/ori/leo-zones-real");
     if (!res.ok) {
       target.textContent = "Unable to load LEO zone data.";
       return;
     }
 
-    const data = await res.json();
+    const payload = await res.json();
+    const data = payload.zones || [];
+    const snapshot = payload.snapshot_time_utc || "unknown";
 
     let html = "";
-    html += "<table style='width:100%; border-collapse:collapse; margin-top:0.75rem; font-size:0.9rem;'>";
+    html += "<div style='margin:0.25rem 0 0.75rem 0; color:#9ca3af; font-size:0.85rem;'>";
+    html += `Source: CelesTrak active satellites snapshot · Snapshot: ${snapshot}`;
+    html += "</div>";
+
+    html += "<table style='width:100%; border-collapse:collapse; margin-top:0.5rem; font-size:0.9rem;'>";
     html += "<thead><tr>";
-    html += "<th>Zone</th>";
-    html += "<th>Altitude</th>";
-    html += "<th>Objects (est.)</th>";
-    html += "<th>Zone Pressure</th>";
-    html += "<th>Notes</th>";
+    html += "<th style='text-align:left; padding:0.4rem 0;'>Zone</th>";
+    html += "<th style='text-align:left; padding:0.4rem 0;'>Altitude</th>";
+    html += "<th style='text-align:left; padding:0.4rem 0;'>Active Objects</th>";
+    html += "<th style='text-align:left; padding:0.4rem 0;'>ZPI (0–100)</th>";
     html += "</tr></thead><tbody>";
 
     for (const z of data) {
+      const count = Number(z.estimated_object_count || 0);
+      const zpi = Number(z.zone_pressure_index || 0);
+
       html += "<tr>";
-      html += `<td>${z.zone_label}</td>`;
-      html += `<td>${z.altitude_range_km}</td>`;
-      html += `<td>${z.estimated_object_count}</td>`;
-      html += `<td>${z.zone_pressure_index.toFixed(1)}</td>`;
-      html += `<td>${z.notes}</td>`;
+      html += `<td style='padding:0.3rem 0;'>${z.zone_label}</td>`;
+      html += `<td style='padding:0.3rem 0;'>${z.altitude_range_km}</td>`;
+      html += `<td style='padding:0.3rem 0;'>${count.toLocaleString()}</td>`;
+      html += `<td style='padding:0.3rem 0;'>${zpi.toFixed(1)}</td>`;
       html += "</tr>";
     }
 
     html += "</tbody></table>";
-    target.innerHTML = html;
 
+    // Optional: add one-line method note (high credibility, low noise)
+    html += "<div style='margin-top:0.6rem; color:#9ca3af; font-size:0.85rem;'>";
+    html += "Method: mean-motion → approximate altitude; binned into sub-bands; ZPI normalized within LEO.";
+    html += "</div>";
+
+    target.innerHTML = html;
   } catch (err) {
     console.error(err);
     target.textContent = "Unable to load LEO sub-band congestion.";
