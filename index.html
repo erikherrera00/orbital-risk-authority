@@ -336,12 +336,13 @@
 
 
 async function loadVersion() {
-  const el = document.getElementById("ora-version");
+  const target = document.getElementById("ora-version");
   if (!target) return;
 
-  target.textContect = "Fetching ORA version...";
-  
   try {
+    target.textContent = "Fetching ORA version…";
+
+    // If your backend uses a different endpoint, update it here
     const res = await fetch(ORA_API_BASE + "/version");
     if (!res.ok) {
       target.textContent = "Version unavailable.";
@@ -349,11 +350,14 @@ async function loadVersion() {
     }
 
     const v = await res.json();
-    target.textContent = `ORA ${v.ori_version} — API ${data.api_version} — ${v.prototype_stage}`;
+
+    const api = v.api_version ?? v.version ?? "unknown";
+    const ori = v.ori_version ?? "unknown";
+    const stage = v.prototype_stage ?? "";
+
+    target.textContent = `ORA ${ori} · API ${api}${stage ? " · " + stage : ""}`;
   } catch (e) {
-    target.textContent = 'ORA ${v.ori_version) · API ${v.api_version} · ${v.prototype_stage}';
-  } catch (e) {
-    console.error(e);
+    console.error("loadVersion failed:", e);
     target.textContent = "Version unavailable.";
   }
 }
@@ -510,7 +514,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
   for (const fn of fns) {
     try {
-      fn();
+      const result = fn();
+      if (result && typeof result.then === "function") {
+        result.catch((e) => console.error("Async init error:", e));
+      }
     } catch (e) {
       console.error("Init error:", e);
     }
