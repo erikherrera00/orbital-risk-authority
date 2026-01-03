@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from fastapi import Request
+from fastapi.responses import RedirectResponse
 from typing import List
 import catalog
 
@@ -189,17 +189,12 @@ def get_active_leo_summary():
     )
 
 
-@app.get("/ori/activate-leo", tags=["debug"])
-def activate_leo_trap(request: Request):
-    # TEMP trap to identify who is calling the wrong route
-    ua = request.headers.get("user-agent", "unknown")
-    ref = request.headers.get("referer", "none")
-    return {
-        "status": "deprecated_route",
-        "message": "Use /ori/active-leo (no 't')",
-        "user_agent": ua,
-        "referer": ref,
-    }
+@app.get("/ori/activate-leo", include_in_schema=False)
+def activate_leo_redirect():
+    return RedirectResponse(
+        url="/ori/active-leo",
+        status_code=307
+    )
 
 
 @app.get("/ori/operators", response_model=List[OperatorRisk], tags=["ori"])
