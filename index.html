@@ -352,17 +352,6 @@ async function loadVersion() {
 }
 
 
-(async () => {
-  const el = document.getElementById("ori-leo-zones");
-  console.log("element exists:", !!el);
-  const r = await fetch(ORA_API_BASE + "/ori/leo-zones-real");
-  console.log("status:", r.status);
-  const j = await r.json();
-  console.log("keys:", Object.keys(j));
-  console.log("zones length:", (j.zones || []).length);
-})();
-
-
 async function loadActiveLEO() {
   const target = document.getElementById("ora-active-leo");
   if (!target) return;
