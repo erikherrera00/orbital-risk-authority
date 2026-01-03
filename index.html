@@ -383,7 +383,8 @@ async function loadLEOZones() {
 
   // show immediate status so you know it ran
   target.textContent = "Loading LEO sub-band congestion…";
-
+  target.style.display = "block";
+  target.style.visibility = "visible";
   try {
     const res = await fetch(ORA_API_BASE + "/ori/leo-zones-real");
     if (!res.ok) {
@@ -435,7 +436,8 @@ async function loadLEOZones() {
     html += `<div style="margin-top:0.6rem; color:#9ca3af; font-size:0.85rem;">`;
     html += `Method: mean-motion → approximate altitude; binned into sub-bands; ZPI normalized within LEO.`;
     html += `</div>`;
-
+    
+    console.log("Rendering LEO zones now...", { snapshot, zonesLen: zones.length });
     target.innerHTML = html;
   } catch (err) {
     console.error("loadLEOZones failed:", err);
