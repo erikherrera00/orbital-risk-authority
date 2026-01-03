@@ -217,6 +217,8 @@
       real active objects binned by approximate altitude. ZPI is a relative congestion index
       normalized within LEO.
     </p>
+    
+    <div id="ori-leo-zones">loading LEO sub-band congestion...</div>
 
     <h2>Active LEO Snapshot (Real Data)</h2>
     <p style="color:#9ca3af; font-size:0.9rem;">
@@ -490,26 +492,24 @@ async function loadOperatorRisk() {
   }
 }
 
+
 document.addEventListener("DOMContentLoaded", () => {
   const fns = [
     loadGlobalRiskSummary,
     loadOperatorRisk,
-    loadLEOZones,
     loadActiveLEO,
+    loadLEOZones,
     loadVersion,
   ];
 
   for (const fn of fns) {
     try {
-      const result = fn();
-      // If it's async, we don't await here—each function updates its own section.
-      if (result && typeof result.then === "function") {
-        result.catch((e) => console.error("Async init error:", e));
-      }
+      fn();
     } catch (e) {
       console.error("Init error:", e);
     }
   }
 });
+
 </script>
 
