@@ -283,6 +283,7 @@
         <strong>orbitalriskauthority@proton.me</strong>
       </p>
     </section>
+    <div id="ora-version">Fetching ORA version…</div>
     <footer style="margin-top:3rem; color:#6b7280; font-size:0.8rem;">
       <p>
         Orbital Risk Authority - ORA v0.3 · ORI v0.3 · API <span id="api-version">loading</span>
@@ -336,19 +337,24 @@
 
 async function loadVersion() {
   const el = document.getElementById("ora-version");
-  if (!el) return;
+  if (!target) return;
 
+  target.textContect = "Fetching ORA version...";
+  
   try {
     const res = await fetch(ORA_API_BASE + "/version");
     if (!res.ok) {
-      el.textContent = "ORA version unavailable.";
+      target.textContent = "Version unavailable.";
       return;
     }
 
-    const data = await res.json();
-    el.textContent = `ORA ${data.ori_version} — API ${data.api_version} — ${data.prototype_stage}`;
-  } catch {
-    el.textContent = "ORA version unavailable.";
+    const v = await res.json();
+    target.textContent = `ORA ${v.ori_version} — API ${data.api_version} — ${v.prototype_stage}`;
+  } catch (e) {
+    target.textContent = 'ORA ${v.ori_version) · API ${v.api_version} · ${v.prototype_stage}';
+  } catch (e) {
+    console.error(e);
+    target.textContent = "Version unavailable.";
   }
 }
 
