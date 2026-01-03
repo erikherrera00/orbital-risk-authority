@@ -331,7 +331,6 @@
     }
   }
 
-  document.addEventListener("DOMContentLoaded", loadGlobalRiskSummary);
 
 async function loadVersion() {
   const el = document.getElementById("ora-version");
@@ -385,6 +384,9 @@ async function loadLEOZones() {
   target.textContent = "Loading LEO sub-band congestion…";
   target.style.display = "block";
   target.style.visibility = "visible";
+  target.style.minHeight = "120px";
+  target.style.overflow = "visible";
+
   try {
     const res = await fetch(ORA_API_BASE + "/ori/leo-zones-real");
     if (!res.ok) {
@@ -489,11 +491,25 @@ async function loadOperatorRisk() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-    loadGlobalRiskSummary();
-    loadOperatorRisk();
-    loadLEOZones();
-    loadActiveLEO();
-    loadVersion();
-  });
+  const fns = [
+    loadGlobalRiskSummary;
+    loadOperatorRisk;
+    loadLEOZones;
+    loadActiveLEO;
+    loadVersion;
+  ];
+
+  for (const fn of fns) {
+    try {
+      const result = fn();
+      // If it's async, we don't await here—each function updates its own section.
+      if (result && typeof result.then === "function") {
+        result.catch((e) => console.error("Async init error:", e));
+      }
+    } catch (e) {
+      console.error("Init error:", e);
+    }
+  }
+});
 </script>
 
