@@ -162,19 +162,22 @@ def get_global_risk_summary():
     orbit_bands = []
 
     for band_name, risk_score, risk_level, notes in band_definitions:
-        key = label_map.get(band_name)
-        obj_count = regime_counts.get(key, 0)nif key else 0
+        key = band_to_key(band_name)
+        obj_count = regime_counts.get(key, 0) if key else 0
         
-        ppi = max(0.0, min(100.0, compute_population_pressure(obj_count)))
+        ppi = compute_population_pressure(obj_count)
+        ppi = max(0.0, min(100.0, ppi))
 
-        orbit_bands.append(OrbitBandsSummary(
-             band_name=band_name,
-             risk_score=risk_score,
-             risk_level=risk_level,
-             object_count=obj_count,
-             population_pressure_index=ppi,
-             notes=notes,
-         ))
+        orbit_bands.append(
+            OrbitBandsSummary(
+                orbit_band_name=band_name,
+                ori_score=risk_score,
+                ori_level=risk_level,
+                object_count=obj_count,
+                population_pressure_index=ppi,
+                notes=notes,
+            )
+        )
         
 
     return GlobalRiskSummary(
