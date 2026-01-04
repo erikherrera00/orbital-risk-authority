@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from fastapi.responses import RedirectResponse
-from typing import List
+from typing import List, Optional
 import catalog
 
 app = FastAPI(
@@ -70,6 +70,15 @@ class OrbitBandRisk(BaseModel):
     risk_level: str  # e.g. "Low", "Moderate", "High", "Critical"
     object_count: int  # approximate tracked objects in this band
     population_pressure_index: float  # 0-100, derived from object_count
+    notes: str
+
+
+class OrbitBandSummary(BaseModel):
+    orbit_band: str
+    ori_score: float
+    ori_level: str
+    object_count: int
+    population_pressure_index: float
     notes: str
 
 
