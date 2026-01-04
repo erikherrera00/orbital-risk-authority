@@ -74,10 +74,11 @@ class OrbitBandRisk(BaseModel):
 
 
 class GlobalRiskSummary(BaseModel):
-    overall_risk_score: float  # 0-100
+    data_source: str
+    snapshot_time_utc: str
+    overall_risk_score: float 
     overall_risk_level: str
-    orbit_bands: List[OrbitBandRisk]
-    methodology_version: str
+    orbit_bands: list[OrbitBandSummary]
 
 
 class OperatorRisk(BaseModel):
@@ -122,7 +123,7 @@ def health_check():
     return {"status": "ok", "service": "Orbital Risk Authority API"}
 
 
-@app.get("/ori/global-summary", response_model=GlobalRiskSummary, tags=["ori"])
+@app.get("/ori/global-summary", response_model=GlobalRiskSummary)
 def get_global_risk_summary():
     """
     Prototype global ORI summary.
@@ -181,10 +182,11 @@ def get_global_risk_summary():
         
 
     return GlobalRiskSummary(
+        data_source="CelesTrak active satellites CSV snapshot (GROUP=active, FORMAT=csv)",        
+        Snapshot_time_utc=snapshot_time_utc,
         overall_risk_score=61.3,
         overall_risk_level="Elevated",
         orbit_bands=orbit_bands,
-        methodology_version="ORI-0.2-PPI",
     )
 
 
