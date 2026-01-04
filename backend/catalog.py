@@ -8,6 +8,7 @@ from typing import List, Dict, Any
 import math
 from typing import Tuple
 from functools import lru_cache
+from typing import Optional
 
 DATA_FILE = Path(__file__).parent / "data" / "active-satellites.csv"
 
@@ -23,6 +24,38 @@ class CatalogRow:
 def load_active_catalog_cached() -> List[CatalogRow]:
     return load_active_catalog()
 
+
+def classify_regime(mean_motion_rev_per_day: float, eccentricity: float) -> Optional[str]:
+    if mean_motion_rev_per_day is None:
+        return None
+
+    # LEO definition consistent with what you already used
+    if mean_motion_rev_per_day >= 11.25 and eccentricity < 0.25:
+        return "LEO"
+
+    # GEO approx 1 rev/day
+    if 0.95 <= mean_motion_rev_per_day <= 1.05 and eccentricity < 0.25:
+        return "GEO"
+
+    # MEO sits between GEO and LEO
+    if 1.05 < mean_motion_rev_per_day < 11.25 and eccentricity < 0.25:
+        return "MEO"
+
+    return None
+
+
+def count_active_regimes(objects) -> dict:
+    counts = {"LEO": 0, "MEO": 0, "GEO": 0}
+    for obj in objects:
+        # adapt these field names to your row model
+        mm = getattr(obj, "mean_motion", None)
+        ecc = getattr(obj, "eccentricity", None)
+        if mm is None or ecc is None:
+            continue
+        r = classify_regime(float(mm), float(ecc))
+        if r in counts:
+            counts[r] += 1
+    return counts
 
 def clear_catalog_cache() -> None:
     load_active_catalog_cached.cache_clear()

@@ -48,10 +48,20 @@ def compute_population_pressure(count: int) -> float:
     return round(min(100.0, (count / MAX_OBJECTS) * 100.0), 1)
 
 
+
+
 def compute_fleet_pressure(fleet_size: int, max_size: int) -> float:
     if max_size <= 0:
         return 0.0
     return round(min(100.0, (fleet_size / max_size) * 100.0), 1)
+
+
+def band_to_key(name: str) -> str | None:
+    n = name.lower()
+    if "leo" in n: return "LEO"
+    if "meo" in n: return "MEO"
+    if "geo" in n: return "GEO"
+    return None
 
 
 class OrbitBandRisk(BaseModel):
@@ -139,30 +149,33 @@ def get_global_risk_summary():
             "Crowding in key slots, but lower debris density than LEO.",
         ),
     ]
+    
+    objects = catalog.load_active_catalog_cached()
+    regime_counts = catalog.count_active_regimes(objects)
+
+    label_map = {
+        "Low Earth Orbit (LEO)": "LEO",
+        "Medium Earth Orbit (MEO)": "MEO",
+        "Geosynchronous Orbit (GEO)": "GEO",
+    }
 
     orbit_bands = []
 
     for band_name, risk_score, risk_level, notes in band_definitions:
-        objects = catalog.load_active_catalog_cached()
-        regime_counts = catalog.count_active_regimes(objects)
-        label_map = {
-            "Low Earth Orbit (LEO)": "LEO",
-            "Medium Earth Orbit (MEO)": "MEO",
-            "Geosynchronous Orbit (GEO)": "GEO",
-        }
-        obj_count = regime_counts.get(label_map.get(band_name, ""), 0)
-        ppi = compute_population_pressure(obj_count)
+        key = label_map.get(band_name)
+        obj_count = regime_counts.get(key, 0)nif key else 0
+        
+        ppi = max(0.0, min(100.0, compute_population_pressure(obj_count)))
 
-        orbit_bands.append(
-            OrbitBandRisk(
-                band_name=band_name,
-                risk_score=risk_score,
-                risk_level=risk_level,
-                object_count=obj_count,
-                population_pressure_index=ppi,
-                notes=notes,
-            )
-        )
+        orbit_bands.append(OrbitBandsSummary(
+             band_name=band_name,
+             risk_score=risk_score,
+             risk_level=risk_level,
+             object_count=obj_count,
+             population_pressure_index=ppi,
+             notes=notes,
+         ))
+        
 
     return GlobalRiskSummary(
         overall_risk_score=61.3,
@@ -173,6 +186,14 @@ def get_global_risk_summary():
 
 
 class ActiveRegimeSummary(BaseModel):
+    data_source: str
+    snapshot_time_utc: str
+    leo_active: int
+    meo_active: int
+    geo_active: int
+
+
+class ActiveRegimes(BaseModel):
     data_source: str
     snapshot_time_utc: str
     leo_active: int
@@ -202,7 +223,7 @@ class OraVersion(BaseModel):
     prototype_stage: str
 
 
-@app.get("/ori/active-regimes", response_model=ActiveRegimeSummary, tags=["ori"])
+@app.get("/ori/active-regimes", response_model=ActiveRegimes, tags=["ori"])
 def get_active_regimes():
     objects = catalog.load_active_catalog_cached()
     snapshot_time = catalog.get_snapshot_timestamp_iso()
