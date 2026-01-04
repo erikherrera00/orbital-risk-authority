@@ -179,13 +179,13 @@ def get_global_risk_summary():
         ppi = max(0.0, min(100.0, ppi))
 
         orbit_bands.append(
-            OrbitBandsSummary(
+            GlobalRiskSummary(
                 orbit_band_name=band_name,
-                ori_score=risk_score,
-                ori_level=risk_level,
-                object_count=obj_count,
-                population_pressure_index=ppi,
-                notes=notes,
+                ori_score=float(risk_score),
+                ori_level=str(risk_level),
+                object_count=int(obj_coun)t,
+                population_pressure_index=float(ppi),
+                notes=str(notes),
             )
         )
         
