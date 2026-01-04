@@ -217,6 +217,10 @@
       The table below is populated from the ORA prototype API <code>/ori/global-summary</code>.
       ORI scores are framework-driven (not predictive). Population and congestion fields use real snapshot-derived values where indicated.
     </p>
+    <div id="ora-regime-counts" style="margin-top:0.75rem; font-size:0.9rem; color:#e5e7eb;">
+      Loading active regime counts…
+    </div>
+
     <div id="ori-global-summary" style="margin-top:0.75rem; font-size:0.95rem;">
       Loading global orbital risk summary…
     </div>
@@ -474,6 +478,26 @@ async function loadActiveLEO() {
 }
 
 
+async function loadActiveRegimes() {
+  const el = document.getElementById("ora-regime-counts");
+  if (!el) return;
+
+  const res = await fetch(ORA_API_BASE + "/ori/active-regimes");
+  if (!res.ok) {
+    el.textContent = "Unable to load regime counts.";
+    return;
+  }
+
+  const d = await res.json();
+  el.innerHTML = `
+    <strong>Active objects:</strong>
+    LEO ${d.leo_active.toLocaleString()} ·
+    MEO ${d.meo_active.toLocaleString()} ·
+    GEO ${d.geo_active.toLocaleString()}
+  `;
+}
+
+
 async function loadLEOZones() {
   const target = document.getElementById("ori-leo-zones");
   if (!target) {
@@ -598,6 +622,7 @@ document.addEventListener("DOMContentLoaded", () => {
   try { loadGlobalRiskSummary(); } catch (e) { console.error(e); }
   try { loadOperatorRisk(); } catch (e) { console.error(e); }
   try { loadActiveLEO(); } catch (e) { console.error(e); }
+  try { loadActiveRegimes(); } catch (e) { console.error(e); } 
   try { loadLEOZones(); } catch (e) { console.error(e); }
   try { loadVersion(); } catch (e) { console.error(e); }
 });
