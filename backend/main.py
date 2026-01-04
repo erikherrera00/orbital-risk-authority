@@ -4,6 +4,8 @@ from pydantic import BaseModel
 from fastapi.responses import RedirectResponse
 from typing import List, Optional
 import catalog
+import traceback
+from fastapi import HTTPException
 
 app = FastAPI(
     title="Orbital Risk Authority API",
@@ -197,6 +199,10 @@ def get_global_risk_summary():
         overall_risk_level="Elevated",
         orbit_bands=orbit_bands,
     )
+except Exception as e:
+    print("GLOBAL-SUMMARY ERROR:", repr(e))
+    traceback.print_exc()
+    raise HTTPException(status_code=500, detail=f"{type(e).__name__}: {e}")
 
 
 class ActiveRegimeSummary(BaseModel):
