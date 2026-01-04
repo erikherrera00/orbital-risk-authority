@@ -183,7 +183,7 @@ def get_global_risk_summary():
                 orbit_band_name=band_name,
                 ori_score=float(risk_score),
                 ori_level=str(risk_level),
-                object_count=int(obj_coun)t,
+                object_count=int(obj_count),
                 population_pressure_index=float(ppi),
                 notes=str(notes),
             )
