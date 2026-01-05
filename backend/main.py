@@ -136,9 +136,9 @@ def health_check():
 
 @app.get("/ori/global-summary", response_model=GlobalRiskSummary)
 def get_global_risk_summary():
-        objects = catalog.load_active_catalog_cached()
-        regime_counts = catalog.count_active_regimes(objects)
-        snapshot_time_utc = catalog.get_snapshot_time_utc()
+    objects = catalog.load_active_catalog_cached()
+    regime_counts = catalog.count_active_regimes(objects)
+    snapshot_time_utc = catalog.get_snapshot_time_utc()
     
     orbit_bands = []
     for band_name, risk_score, risk_level, notes in band_definitions:
