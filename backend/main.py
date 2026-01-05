@@ -179,11 +179,11 @@ def get_global_risk_summary():
     def band_to_key(name: str):
         n = name.lower()
         if "leo" in n:
-        return "LEO"
+            return "LEO"
         if "meo" in n:
-        return "MEO"
+            return "MEO"
         if "geo" in n:
-        return "GEO"
+            return "GEO"
         return None
     
     objects = catalog.load_active_catalog_cached()
@@ -192,12 +192,12 @@ def get_global_risk_summary():
 
     orbit_bands: list[OrbitBandSummary] = []
     
-    for band_name, risk_score, risk_level, notes in BAND_DEFINITIONS:
+    for band_name, risk_score, risk_level, notes in band_definitions:
         key = band_to_key(band_name)
         obj_count = regime_counts.get(key, 0) if key else 0
         
         ppi = compute_population_pressure(obj_count)
-        ppi = max(0.0, min(100.0, ppi))
+        ppi = max(0.0, min(100.0, float(ppi))
 
         orbit_bands.append(
             OrbitBandSummary(
