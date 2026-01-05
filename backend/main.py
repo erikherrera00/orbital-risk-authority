@@ -136,11 +136,10 @@ def health_check():
 
 @app.get("/ori/global-summary", response_model=GlobalRiskSummary)
 def get_global_risk_summary():
-    """
-    Prototype global ORI summary.
-    Now uses approximate object counts per orbital regime and derives
-    a Population Pressure Index (0–100) relative to the most crowded band.
-    """
+    try:
+        objects = catalog.load_active_catalog_cached()
+        regime_counts = catalog.count_active_regimes(objects)
+        snapshot_time_utc = catalog.get_snapshot_time_utc()
     band_definitions = [
         (
             "LEO",
@@ -178,11 +177,11 @@ def get_global_risk_summary():
         obj_count = regime_counts.get(key, 0) if key else 0
         
         ppi = compute_population_pressure(obj_count)
-        ppi = max(0.0, min(100.0, ppi))
+        ppi = max(0.0, min(100.0, ppi)))
 
         orbit_bands.append(
-            GlobalRiskSummary(
-                orbit_band_name=band_name,
+            OrbitBandSummary(
+                orbit_band=band_name,
                 ori_score=float(risk_score),
                 ori_level=str(risk_level),
                 object_count=int(obj_count),
