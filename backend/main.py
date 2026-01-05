@@ -9,6 +9,7 @@ from fastapi import Request
 from fastapi.responses import JSONResponse
 from fastapi import HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+import os
 
 app = FastAPI(
     title="Orbital Risk Authority API",
@@ -74,6 +75,12 @@ def band_to_key(name: str) -> str | None:
     if "meo" in n: return "MEO"
     if "geo" in n: return "GEO"
     return None
+
+
+class VersionInfo(BaseModel):
+    version: str
+    commit: str
+    status: str
 
 
 class OrbitBandRisk(BaseModel):
@@ -328,6 +335,18 @@ def get_version():
         api_version="0.3.0",
         ori_version="ORI-0.3",
         prototype_stage="Public prototype – PPI, OFPI, and LEO sub-band congestion"
+    )
+
+
+APP_VERSION = os.getenv("ORA_VERSION", "0.5.0")
+APP_COMMIT = os.getenv("ORA_COMMIT", "dev")
+
+@app.get("/meta/version", response_model=VersionInfo, tags=["meta"])
+def meta_version():
+    return VersionInfo(
+        version=APP_VERSION,
+        commit=APP_COMMIT,
+        status="stable",
     )
 
 
