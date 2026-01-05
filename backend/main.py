@@ -140,44 +140,14 @@ def get_global_risk_summary():
         objects = catalog.load_active_catalog_cached()
         regime_counts = catalog.count_active_regimes(objects)
         snapshot_time_utc = catalog.get_snapshot_time_utc()
-    band_definitions = [
-        (
-            "LEO",
-            72.5,
-            "High",
-            "Dense operational satellite population and debris concentration.",
-        ),
-        (
-            "MEO",
-            45.2,
-            "Moderate",
-            "Navigation constellations dominate; moderate debris risk.",
-        ),
-        (
-            "GEO",
-            38.7,
-            "Moderate",
-            "Crowding in key slots, but lower debris density than LEO.",
-        ),
-    ]
     
-    objects = catalog.load_active_catalog_cached()
-    regime_counts = catalog.count_active_regimes(objects)
-
-    label_map = {
-        "Low Earth Orbit (LEO)": "LEO",
-        "Medium Earth Orbit (MEO)": "MEO",
-        "Geosynchronous Orbit (GEO)": "GEO",
-    }
-
     orbit_bands = []
-
     for band_name, risk_score, risk_level, notes in band_definitions:
         key = band_to_key(band_name)
         obj_count = regime_counts.get(key, 0) if key else 0
         
         ppi = compute_population_pressure(obj_count)
-        ppi = max(0.0, min(100.0, ppi)))
+        ppi = max(0.0, min(100.0, ppi))
 
         orbit_bands.append(
             OrbitBandSummary(
@@ -193,7 +163,7 @@ def get_global_risk_summary():
 
     return GlobalRiskSummary(
         data_source="CelesTrak active satellites CSV snapshot (GROUP=active, FORMAT=csv)",        
-        Snapshot_time_utc=snapshot_time_utc,
+        snapshot_time_utc=snapshot_time_utc,
         overall_risk_score=61.3,
         overall_risk_level="Elevated",
         orbit_bands=orbit_bands,
