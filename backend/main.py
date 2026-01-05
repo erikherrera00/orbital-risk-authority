@@ -5,12 +5,22 @@ from fastapi.responses import RedirectResponse
 from typing import List, Optional
 import catalog
 import traceback
+from fastapi import Request
+from fastapi.responses import JSONResponse
 from fastapi import HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(
     title="Orbital Risk Authority API",
     description="API for the Orbital Risk Index (ORI) prototype",
     version="0.1.0",
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["https://erikherrera00.github.io"],
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # CORS: allow your GitHub Pages site to call this API
@@ -118,6 +128,15 @@ class LEOZoneRealSummary(BaseModel):
     data_source: str
     snapshot_time_utc: str
     zones: List[LEOZoneRisk]
+
+
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request: Request, exc: Exception):
+    traceback.print_exc()
+    return JSONResponse(
+        status_code=500,
+        content={"detail": f"{type(exc).__name__}: {exc}"},
+    )
 
 
 @app.get("/", tags=["system"])
