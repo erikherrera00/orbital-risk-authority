@@ -159,6 +159,22 @@ def get_global_risk_summary():
     regime_counts = catalog.count_active_regimes(objects)
     snapshot_time_utc = catalog.get_snapshot_timestamp_iso()
     
+band_definitions = [
+    ("Low Earth Orbit (LEO)", 72.5, "Elevated", "High density + conjunction growth; disposal compliance varies."),
+    ("Medium Earth Orbit (MEO)", 48.0, "Moderate", "Moderate density; critical navigation assets; long persistence."),
+    ("Geosynchronous Orbit (GEO)", 41.0, "Moderate", "Stable slots but high-value assets; end-of-life graveyard practices."),
+]
+
+def band_to_key(name: str):
+    n = name.lower()
+    if "leo" in n:
+        return "LEO"
+    if "meo" in n:
+        return "MEO"
+    if "geo" in n:
+        return "GEO"
+    return None
+    
     orbit_bands = []
     for band_name, risk_score, risk_level, notes in band_definitions:
         key = band_to_key(band_name)
