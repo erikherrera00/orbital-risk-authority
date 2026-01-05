@@ -130,6 +130,20 @@ class LEOZoneRealSummary(BaseModel):
     zones: List[LEOZoneRisk]
 
 
+BAND_DEFINITIONS = [
+    ("Low Earth Orbit (LEO)", 72.5, "Elevated", "High density + conjunction growth; disposal compliance varies."),
+    ("Medium Earth Orbit (MEO)", 48.0, "Moderate", "Moderate density; critical navigation assets; long persistence."),
+    ("Geosynchronous Orbit (GEO)", 41.0, "Moderate", "Stable slots but high-value assets; end-of-life graveyard practices."),
+]
+
+def band_to_key(name: str):
+    n = name.lower()
+    if "leo" in n: return "LEO"
+    if "meo" in n: return "MEO"
+    if "geo" in n: return "GEO"
+    return None
+
+
 @app.exception_handler(Exception)
 async def unhandled_exception_handler(request: Request, exc: Exception):
     traceback.print_exc()
@@ -176,7 +190,7 @@ def band_to_key(name: str):
     return None
     
     orbit_bands = []
-    for band_name, risk_score, risk_level, notes in band_definitions:
+    for band_name, risk_score, risk_level, notes in BAND_DEFINITIONS:
         key = band_to_key(band_name)
         obj_count = regime_counts.get(key, 0) if key else 0
         
