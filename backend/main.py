@@ -197,7 +197,7 @@ def get_global_risk_summary():
         obj_count = regime_counts.get(key, 0) if key else 0
         
         ppi = compute_population_pressure(obj_count)
-        ppi = max(0.0, min(100.0, float(ppi))
+        ppi = max(0.0, min(100.0, float(ppi)))
 
         orbit_bands.append(
             OrbitBandSummary(
