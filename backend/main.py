@@ -318,6 +318,25 @@ def activate_leo_redirect():
     )
 
 
+@app.get("/docs/methodology", response_model=Methodology, tags=["docs"])
+def docs_methodology():
+    return Methodology(
+        version="METH-0.5",
+        definitions={
+            "Data source": "CelesTrak active satellites CSV snapshot (GROUP=active, FORMAT=csv)",
+            "Snapshot time": "Derived from local cached snapshot file timestamp (UTC ISO 8601).",
+            "LEO/MEO/GEO regimes": "Regimes computed from mean motion / eccentricity rules in catalog module.",
+            "PPI": "Population Pressure Index: normalized 0–100 based on active object count by regime.",
+            "ORI": "Framework-driven risk score (not predictive) incorporating PPI and qualitative risk notes.",
+        },
+        notes=[
+            "ORA is a public prototype and does not provide conjunction prediction or collision probability.",
+            "All metrics are snapshot-based and may lag real-time conditions.",
+            "Definitions may evolve; contract endpoints will maintain backward compatibility.",
+        ],
+    )
+
+
 @app.get("/ori/operators", response_model=List[OperatorRisk], tags=["ori"])
 def get_operator_risk():
     """
