@@ -11,6 +11,20 @@ from fastapi import HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import os
 
+from .contracts import (
+    VersionInfo,
+    OrbitBandSummary,
+    GlobalRiskSummary,
+    OperatorRisk,
+    OperatorRiskList,
+    LEOZoneRisk,
+    LEOZonesResponse,
+    ActiveLEOSummary,
+    ActiveRegimes,
+    Methodology,
+)
+
+
 app = FastAPI(
     title="Orbital Risk Authority API",
     description="API for the Orbital Risk Index (ORI) prototype",
