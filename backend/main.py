@@ -8,6 +8,8 @@ import traceback
 from fastapi import Request
 from fastapi.responses import JSONResponse
 from fastapi import HTTPException
+import json
+from pathlib import Path
 from fastapi.middleware.cors import CORSMiddleware
 import os
 
@@ -23,6 +25,7 @@ from contracts import (
     ActiveRegimes,
     Methodology,
     TotalRegimes,
+    TrackedObjectsSummary
 )
 
 
@@ -508,6 +511,29 @@ def get_active_regimes():
         leo_active=counts["LEO"],
         meo_active=counts["MEO"],
         geo_active=counts["GEO"],
+    )
+
+
+TRACKED_TOTALS_FILE = Path(__file__).parent / "data" / "tracked_totals.json"
+
+@app.get("/ori/tracked-objects", response_model=TrackedObjectsSummary, tags=["ori"])
+def ori_tracked_objects():
+    if not TRACKED_TOTALS_FILE.exists():
+        raise HTTPException(status_code=500, detail="tracked_totals.json missing on server")
+
+    payload = json.loads(TRACKED_TOTALS_FILE.read_text(encoding="utf-8"))
+    active = len(catalog.load_active_catalog_cached())
+
+    total = int(payload.get("tracked_objects_total", 0))
+    snapshot_time = payload.get("snapshot_time_utc", catalog.get_snapshot_timestamp_iso())
+
+    return TrackedObjectsSummary(
+        data_source=payload.get("data_source", "Tracked object totals snapshot"),
+        snapshot_time_utc=snapshot_time,
+        tracked_objects_total=total,
+        active_satellites=active,
+        inactive_or_debris_estimate=max(0, total - active),
+        notes=payload.get("notes", "Macro totals; not used for regime classification without elements."),
     )
 
 
