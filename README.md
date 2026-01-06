@@ -35,3 +35,26 @@ This repository currently contains:
 - Publish a more detailed annual global orbital risk report
 - Provide machine-readable outputs and dashboards for regulators, insurers, and operators
 
+What ORA is
+
+- A public prototype that publishes framework-driven orbital risk indicators.
+
+- Uses snapshot-derived population counts (CelesTrak active catalog) to compute pressure indices.
+
+- Designed for comparability across orbit regimes and operators.
+
+What ORA is not
+
+- Not a conjunction prediction service.
+
+- Not a guarantee of safety, collision likelihood, or regulatory compliance.
+
+- Not an authoritative government registry.
+
+- Not a tool for enforcement; it’s a measurement & reporting layer.
+
+Data & methodology notes
+
+- Snapshot-based; may lag real-time conditions.
+
+- Definitions (e.g., LEO/MEO/GEO) use standard thresholds; see /docs and methodology files.
