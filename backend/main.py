@@ -22,6 +22,7 @@ from contracts import (
     ActiveLEOSummary,
     ActiveRegimes,
     Methodology,
+    TotalRegimes,
 )
 
 
@@ -171,6 +172,19 @@ async def unhandled_exception_handler(request: Request, exc: Exception):
     return JSONResponse(
         status_code=500,
         content={"detail": f"{type(exc).__name__}: {exc}"},
+    )
+
+
+@app.get("/ori/all-regimes", response_model=TotalRegimes, tags=["ori"])
+def ori_all_regimes():
+    # Dummy placeholder to lock routing + contract first
+    snapshot_time = catalog.get_snapshot_timestamp_iso()
+    return TotalRegimes(
+        data_source="Placeholder (wiring in total objects next)",
+        snapshot_time_utc=snapshot_time,
+        leo_total=0,
+        meo_total=0,
+        geo_total=0,
     )
 
 

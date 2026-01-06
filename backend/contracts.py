@@ -54,6 +54,13 @@ class OperatorRiskList(BaseModel):
     operators: List[OperatorRisk]
 
 
+class TotalRegimes(BaseModel):
+    data_source: str
+    snapshot_time_utc: str
+    leo_total: int
+    meo_total: int
+    geo_total: int
+
 # ---------------------------
 # LEO Zones / Congestion
 # ---------------------------
