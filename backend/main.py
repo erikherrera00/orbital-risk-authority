@@ -11,7 +11,7 @@ from fastapi import HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import os
 
-from .contracts import (
+from contracts import (
     VersionInfo,
     OrbitBandSummary,
     GlobalRiskSummary,
