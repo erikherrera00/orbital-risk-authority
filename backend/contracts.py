@@ -86,6 +86,25 @@ class ActiveRegimesHistory(BaseModel):
     points: list[ActiveRegimesHistoryPoint]
     notes: str
 
+
+class LEOZoneHistoryRow(BaseModel):
+    zone_label: str
+    count: int
+    zpi: float
+    delta_count: int
+    delta_zpi: float
+
+
+class LEOZonesHistoryPoint(BaseModel):
+    snapshot_time_utc: str
+    zones: list[LEOZoneHistoryRow]
+
+
+class LEOZonesHistory(BaseModel):
+    data_source: str
+    points: list[LEOZonesHistoryPoint]
+    notes: str
+
 # ---------------------------
 # LEO Zones / Congestion
 # ---------------------------

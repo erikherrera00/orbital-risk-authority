@@ -28,6 +28,9 @@ from contracts import (
     ActiveRegimes,
     Methodology,
     TotalRegimes,
+    LEOZonesHistory,
+    LEOZonesHistoryPoint,
+    LEOZoneHistoryRow,
 )
 
 
@@ -177,6 +180,79 @@ async def unhandled_exception_handler(request: Request, exc: Exception):
     return JSONResponse(
         status_code=500,
         content={"detail": f"{type(exc).__name__}: {exc}"},
+    )
+
+
+@app.get("/ori/history/leo-zones", response_model=LEOZonesHistory, tags=["ori"])
+def ori_history_leo_zones(limit: int = Query(30, ge=1, le=365)):
+    snapshots = _load_history_files()
+    if not snapshots:
+        return LEOZonesHistory(
+            data_source="ORA history snapshots (backend/data/history/*.json)",
+            points=[],
+            notes="No history snapshots found yet. Add files under backend/data/history/.",
+        )
+
+    snaps = snapshots[-limit:]
+
+    points: list[LEOZonesHistoryPoint] = []
+
+    # Track previous snapshot's zone values by label so we can compute deltas
+    prev_map: dict[str, dict[str, float]] | None = None
+
+    for s in snaps:
+        t = str(s.get("snapshot_time_utc", "unknown"))
+        zones_raw = s.get("leo_zones", []) or []
+
+        # Build current map
+        curr_map: dict[str, dict[str, float]] = {}
+        for z in zones_raw:
+            label = str(z.get("zone_label", "")).strip()
+            if not label:
+                continue
+            curr_map[label] = {
+                "count": float(z.get("count", 0)),
+                "zpi": float(z.get("zpi", 0.0)),
+            }
+
+        # Create stable ordering (LEO-1, LEO-2, ...)
+        labels = sorted(curr_map.keys())
+
+        zone_rows: list[LEOZoneHistoryRow] = []
+        for label in labels:
+            c_count = int(curr_map[label]["count"])
+            c_zpi = float(curr_map[label]["zpi"])
+
+            if prev_map and label in prev_map:
+                d_count = c_count - int(prev_map[label]["count"])
+                d_zpi = c_zpi - float(prev_map[label]["zpi"])
+            else:
+                d_count = 0
+                d_zpi = 0.0
+
+            zone_rows.append(
+                LEOZoneHistoryRow(
+                    zone_label=label,
+                    count=c_count,
+                    zpi=c_zpi,
+                    delta_count=d_count,
+                    delta_zpi=float(round(d_zpi, 3)),
+                )
+            )
+
+        points.append(
+            LEOZonesHistoryPoint(
+                snapshot_time_utc=t,
+                zones=zone_rows,
+            )
+        )
+
+        prev_map = curr_map
+
+    return LEOZonesHistory(
+        data_source="ORA history snapshots (backend/data/history/*.json)",
+        points=points,
+        notes="Zone deltas are computed relative to the immediately previous snapshot in the returned series.",
     )
 
 
