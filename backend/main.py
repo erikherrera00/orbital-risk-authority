@@ -12,6 +12,7 @@ import json
 from pathlib import Path
 from fastapi.middleware.cors import CORSMiddleware
 import os
+from contracts import TrackedObjectsSummary
 
 from contracts import (
     VersionInfo,
@@ -25,7 +26,6 @@ from contracts import (
     ActiveRegimes,
     Methodology,
     TotalRegimes,
-    TrackedObjectsSummary
 )
 
 

@@ -61,6 +61,15 @@ class TotalRegimes(BaseModel):
     meo_total: int
     geo_total: int
 
+
+class TrackedObjectsSummary(BaseModel):
+    data_source: str
+    snapshot_time_utc: str
+    tracked_objects_total: int
+    active_satellites: int
+    inactive_or_debris_estimate: int
+    notes: str
+
 # ---------------------------
 # LEO Zones / Congestion
 # ---------------------------
