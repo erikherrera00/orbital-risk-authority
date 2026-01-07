@@ -70,6 +70,22 @@ class TrackedObjectsSummary(BaseModel):
     inactive_or_debris_estimate: int
     notes: str
 
+
+class ActiveRegimesHistoryPoint(BaseModel):
+    snapshot_time_utc: str
+    leo_active: int
+    meo_active: int
+    geo_active: int
+    delta_leo: int
+    delta_meo: int
+    delta_geo: int
+
+
+class ActiveRegimesHistory(BaseModel):
+    data_source: str
+    points: list[ActiveRegimesHistoryPoint]
+    notes: str
+
 # ---------------------------
 # LEO Zones / Congestion
 # ---------------------------

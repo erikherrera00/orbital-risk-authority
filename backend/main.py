@@ -13,6 +13,7 @@ from pathlib import Path
 from fastapi.middleware.cors import CORSMiddleware
 import os
 from contracts import TrackedObjectsSummary
+from fastapi import Query
 
 from contracts import (
     VersionInfo,
@@ -188,6 +189,80 @@ def ori_all_regimes():
         leo_total=0,
         meo_total=0,
         geo_total=0,
+    )
+
+
+HISTORY_DIR = Path(__file__).parent / "data" / "history"
+
+def _load_history_files() -> list[dict]:
+    """
+    Load all history snapshot JSON files from backend/data/history/*.json
+    """
+    if not HISTORY_DIR.exists():
+        return []
+
+    files = sorted(HISTORY_DIR.glob("*.json"))  # filename order (YYYY-MM-DD.json works great)
+    snapshots: list[dict] = []
+    for fp in files:
+        try:
+            payload = json.loads(fp.read_text(encoding="utf-8"))
+            # minimal validation
+            if "snapshot_time_utc" in payload and "active_regimes" in payload:
+                snapshots.append(payload)
+        except Exception:
+            # skip bad files (never kill the API for one bad snapshot)
+            continue
+    return snapshots
+
+
+@app.get("/ori/history/active-regimes", response_model=ActiveRegimesHistory, tags=["ori"])
+def ori_history_active_regimes(limit: int = Query(30, ge=1, le=365)):
+    snapshots = _load_history_files()
+    if not snapshots:
+        return ActiveRegimesHistory(
+            data_source="ORA history snapshots (backend/data/history/*.json)",
+            points=[],
+            notes="No history snapshots found yet. Add files under backend/data/history/.",
+        )
+
+    # take most recent `limit` snapshots
+    snaps = snapshots[-limit:]
+
+    points: list[ActiveRegimesHistoryPoint] = []
+    prev = None
+
+    for s in snaps:
+        t = str(s.get("snapshot_time_utc", "unknown"))
+        ar = s.get("active_regimes", {}) or {}
+        leo = int(ar.get("LEO", 0))
+        meo = int(ar.get("MEO", 0))
+        geo = int(ar.get("GEO", 0))
+
+        if prev is None:
+            d_leo = d_meo = d_geo = 0
+        else:
+            d_leo = leo - prev["leo"]
+            d_meo = meo - prev["meo"]
+            d_geo = geo - prev["geo"]
+
+        points.append(
+            ActiveRegimesHistoryPoint(
+                snapshot_time_utc=t,
+                leo_active=leo,
+                meo_active=meo,
+                geo_active=geo,
+                delta_leo=d_leo,
+                delta_meo=d_meo,
+                delta_geo=d_geo,
+            )
+        )
+
+        prev = {"leo": leo, "meo": meo, "geo": geo}
+
+    return ActiveRegimesHistory(
+        data_source="ORA history snapshots (backend/data/history/*.json)",
+        points=points,
+        notes="Deltas are computed relative to the immediately previous snapshot in the returned series.",
     )
 
 
