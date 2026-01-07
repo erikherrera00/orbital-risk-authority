@@ -14,6 +14,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import os
 from contracts import TrackedObjectsSummary
 from fastapi import Query
+from contracts import ActiveRegimesHistory
 
 from contracts import (
     VersionInfo,
