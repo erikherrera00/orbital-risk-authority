@@ -315,6 +315,16 @@
 <script>
   // Use your actual Render URL here:
   const ORA_API_BASE = "https://orbital-risk-authority.onrender.com";  // <-- example, replace
+  
+  async function fetchWithTimeout(url, opts = {}, ms = 12000) {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), ms);
+  try {
+    return await fetch(url, { ...opts, signal: controller.signal });
+  } finally {
+    clearTimeout(id);
+  }
+}
 
   async function loadGlobalRiskSummary() {
   const target = document.getElementById("ori-global-summary");
@@ -323,10 +333,17 @@
   target.textContent = "Loading global ORI snapshot…";
 
   try {
-    const res = await fetch(ORA_API_BASE + "/ori/global-summary");
+    const res = await fetchWithTimeout(ORA_API_BASE + "/ori/history/leo-zones?limit=2", {}, 12000);
     if (!res.ok) {
       target.textContent = `Unable to load global summary (HTTP ${res.status}).`;
       return;
+    }
+    } catch (err) {
+      console.error("loadLEOZoneDeltas failed:", err);
+      target.textContent =
+        (err && err.name === "AbortError")
+          ? "LEO deltas request timed out (backend may be sleeping). Refresh or try again."
+          : "Unable to load LEO zone deltas (see console).";
     }
 
     const payload = await res.json(); // ✅ THIS LINE MUST EXIST
@@ -427,8 +444,6 @@ async function loadVersion() {
     target.textContent = "Version unavailable.";
   }
 }
-
-target.textContent = "Loading LEO zone deltas… (request sent)";
 
 async function loadLEOZoneDeltas() {
   const target = document.getElementById("ori-leo-deltas");
