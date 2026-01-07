@@ -246,6 +246,11 @@
       Source: CelesTrak Active Satellites Catalog (GROUP=active, FORMAT=csv).
       Snapshot-based; updated manually to avoid live-feed abuse.
     </p>
+    <h3 id="leo-deltas" style="margin-top:0.75rem;">LEO zone deltas (since last snapshot)</h3>
+    <div id="ori-leo-deltas" style="margin-top:0.5rem; font-size:0.95rem;">
+      Loading LEO zone deltas…
+    </div>
+
     <h2>Active LEO Snapshot (Real Data)</h2>
     <p style="color:#9ca3af; font-size:0.9rem;">
       This count is derived from a CelesTrak active-satellites CSV snapshot, filtered using a
@@ -420,6 +425,81 @@ async function loadVersion() {
   } catch (e) {
     console.error("loadVersion failed:", e);
     target.textContent = "Version unavailable.";
+  }
+}
+
+
+async function loadLEOZoneDeltas() {
+  const target = document.getElementById("ori-leo-deltas");
+  if (!target) return;
+
+  const arrow = (n) => (n > 0 ? "↑" : n < 0 ? "↓" : "→");
+
+  try {
+    const res = await fetch(ORA_API_BASE + "/ori/history/leo-zones?limit=2");
+    if (!res.ok) {
+      target.textContent = `Unable to load LEO deltas (HTTP ${res.status}).`;
+      return;
+    }
+
+    const data = await res.json();
+    const points = data.points || [];
+
+    if (points.length === 0) {
+      target.textContent = "No LEO history snapshots available yet.";
+      return;
+    }
+
+    const latest = points[points.length - 1];
+    const zones = latest.zones || [];
+
+    // Header line (timestamp)
+    const snap = latest.snapshot_time_utc || "unknown";
+
+    // Build table rows
+    const rows = zones.map((z) => {
+      const dc = Number(z.delta_count ?? 0);
+      const dz = Number(z.delta_zpi ?? 0);
+
+      const dcStr = `${arrow(dc)} ${dc >= 0 ? "+" : ""}${dc.toLocaleString()}`;
+      const dzStr = `${arrow(dz)} ${dz >= 0 ? "+" : ""}${dz.toFixed(2)}`;
+
+      return `
+        <tr>
+          <td style="padding:0.3rem 0;">${z.zone_label}</td>
+          <td style="padding:0.3rem 0;">${Number(z.count ?? 0).toLocaleString()}</td>
+          <td style="padding:0.3rem 0;">${dcStr}</td>
+          <td style="padding:0.3rem 0;">${Number(z.zpi ?? 0).toFixed(1)}</td>
+          <td style="padding:0.3rem 0;">${dzStr}</td>
+        </tr>
+      `;
+    }).join("");
+
+    target.innerHTML = `
+      <div style="color:#9ca3af; font-size:0.85rem; margin-bottom:0.4rem;">
+        Snapshot: ${snap} · Source: ${data.data_source || "ORA history"}
+      </div>
+
+      <table style="width:100%; border-collapse:collapse; margin-top:0.25rem; font-size:0.9rem;">
+        <thead>
+          <tr>
+            <th style="text-align:left; padding:0.4rem 0;">Zone</th>
+            <th style="text-align:left; padding:0.4rem 0;">Count</th>
+            <th style="text-align:left; padding:0.4rem 0;">Δ Count</th>
+            <th style="text-align:left; padding:0.4rem 0;">ZPI</th>
+            <th style="text-align:left; padding:0.4rem 0;">Δ ZPI</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+
+      <div style="margin-top:0.5rem; color:#9ca3af; font-size:0.85rem;">
+        Δ values are relative to the previous snapshot in the history series.
+      </div>
+    `;
+  } catch (err) {
+    console.error("loadLEOZoneDeltas failed:", err);
+    target.textContent = "Unable to load LEO zone deltas (see console).";
   }
 }
 
@@ -624,6 +704,7 @@ document.addEventListener("DOMContentLoaded", () => {
   try { loadActiveLEO(); } catch (e) { console.error(e); }
   try { loadActiveRegimes(); } catch (e) { console.error(e); } 
   try { loadLEOZones(); } catch (e) { console.error(e); }
+  try { loadLEOZonesDeltas(); } catch (e) { console.error(e); }
   try { loadVersion(); } catch (e) { console.error(e); }
 });
 
