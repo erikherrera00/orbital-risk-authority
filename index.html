@@ -417,7 +417,6 @@
 }
 
 
-
 async function loadVersion() {
   const target = document.getElementById("ora-version");
   if (!target) return;
@@ -426,7 +425,7 @@ async function loadVersion() {
     target.textContent = "Fetching ORA version…";
 
     // If your backend uses a different endpoint, update it here
-    const res = await fetch(ORA_API_BASE + "/version");
+    const res = await fetch(ORA_API_BASE + "/meta/version");
     if (!res.ok) {
       target.textContent = "Version unavailable.";
       return;
@@ -438,8 +437,12 @@ async function loadVersion() {
     const ori = v.ori_version ?? "unknown";
     const stage = v.prototype_stage ?? "";
 
-    target.textContent = `ORA ${ori} · API ${api}${stage ? " · " + stage : ""}`;
-  } catch (e) {
+    target.innerHTML =
+      <strong>API:</strong> ${api}<br>
+      <strong>ORI:</strong> ${ori}<br>
+      ${stage ? `<span style="color:#9ca3af;">${stage}</span>` : ""}
+    `;
+  } catch (err) {
     console.error("loadVersion failed:", e);
     target.textContent = "Version unavailable.";
   }
