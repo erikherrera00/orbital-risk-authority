@@ -1,0 +1,30 @@
+{
+  "snapshot_time_utc": "2026-01-02T08:34:25.061839Z",
+  "active_regimes": {
+    "LEO": 13238,
+    "MEO": 178,
+    "GEO": 591
+  },
+  "leo_zones": [
+    {
+      "zone_label": "LEO-1",
+      "count": 5988,
+      "zpi": 100.0
+    },
+    {
+      "zone_label": "LEO-2",
+      "count": 5916,
+      "zpi": 98.8
+    },
+    {
+      "zone_label": "LEO-3",
+      "count": 827,
+      "zpi": 13.8
+    },
+    {
+      "zone_label": "LEO-4",
+      "count": 439,
+      "zpi": 7.3
+    }
+  ]
+}
