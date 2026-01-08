@@ -15,7 +15,7 @@ import os
 from contracts import TrackedObjectsSummary
 from fastapi import Query
 from contracts import ActiveRegimesHistory, ActiveRegimesHistoryPoint
-from datatime import datetime
+from datetime import datetime
 
 from contracts import (
     VersionInfo,
