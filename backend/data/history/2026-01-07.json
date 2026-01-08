@@ -1,5 +1,5 @@
 {
-  "snapshot_time_utc": "2026-01-06T06:54:22Z",
+  "snapshot_time_utc": "2026-01-07T06:54:22Z",
   "active_regimes": { "LEO": 13238, "MEO": 178, "GEO": 591 },
   "leo_zones": [
     { "zone_label": "LEO-1", "count": 5988, "zpi": 100.0 },
