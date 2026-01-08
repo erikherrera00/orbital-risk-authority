@@ -461,6 +461,13 @@ async function loadLEOZoneDeltas() {
       return;
     }
 
+    if (!data.points || data.points.length < 2) {
+      target.innerHTML = `<div style="color:#9ca3af;">
+        Need 2+ history snapshots to compute deltas.
+      </div>`;
+      return;
+    }
+
     const latest = points[points.length - 1];
     const zones = latest.zones || [];
 
