@@ -22,3 +22,5 @@ __pycache__/
 *.pyc
 !backend/data/history/*.json
 
+__pycache__/
+*.pyc
