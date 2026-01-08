@@ -180,6 +180,29 @@ def band_to_key(name: str):
     return None
 
 
+@app.get("/debug/history-files", tags=["debug"])
+def debug_history_files():
+    history_dir = Path(__file__).parent / "data" / "history"
+    files = sorted(history_dir.glob("*.json"))
+    out = []
+    for p in files:
+        try:
+            raw = p.read_text(encoding="utf-8")
+            data = json.loads(raw)
+            out.append({
+                "file": p.name,
+                "bytes": len(raw),
+                "snapshot_time_utc": data.get("snapshot_time_utc"),
+                "keys": sorted(list(data.keys())),
+            })
+        except Exception as e:
+            out.append({
+                "file": p.name,
+                "error": f"{type(e).__name__}: {e}",
+            })
+    return {"count": len(files), "files": out}
+
+
 @app.exception_handler(Exception)
 async def unhandled_exception_handler(request: Request, exc: Exception):
     traceback.print_exc()
