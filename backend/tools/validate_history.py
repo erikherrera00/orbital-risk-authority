@@ -62,7 +62,19 @@ def main() -> int:
                 parse_iso_z(st)
             except Exception as e:
                 problems.append(Problem(p.name, f"Invalid snapshot_time_utc format: {st!r} ({type(e).__name__}: {e})"))
-
+            # Active regimes validation (required)
+            ar = data.get("active_regimes")
+            if not isinstance(ar, dict):
+                problems.append(Problem(p.name, "Missing or invalid 'active_regimes' (must be an object)."))
+            else:
+                for k in ("LEO", "MEO", "GEO"):
+                    if k not in ar:
+                        problems.append(Problem(p.name, f"active_regimes missing key {k!r}."))
+                    else:
+                        v = ar.get(k)
+                        if not is_number(v) or int(v) < 0:
+                            problems.append(Problem(p.name, f"active_regimes[{k}] must be a non-negative number."))
+      
             # Prevent duplicates
             if st in seen_times:
                 problems.append(
