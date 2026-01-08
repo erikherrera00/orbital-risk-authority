@@ -110,8 +110,8 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Generate ORA history snapshot JSON.")
     parser.add_argument(
         "--date",
-        default=None,
-        help="Output filename date in YYYY-MM-DD (default: UTC today).",
+        default=datetime.now(timezone.utc).strftime("%Y-%m-%d"),
+        help="Snapshot date (UTC, YYYY-MM-DD). Defaults to today."
     )
     parser.add_argument(
         "--out",
