@@ -181,7 +181,7 @@
     <ul>
      <li><strong>Orbital Risk Index:</strong> Overview (coming soon)</li>
      <li><strong>API prototype:</strong> <code>/ori/global-summary</code></li>
-   </ul>
+    </ul>
 
     <h2>What ORA focuses on</h2>
     <div class="grid">
@@ -326,25 +326,19 @@
   }
 }
 
-  async function loadGlobalRiskSummary() {
+async function loadGlobalRiskSummary() {
   const target = document.getElementById("ori-global-summary");
   if (!target) return;
 
   target.textContent = "Loading global ORI snapshot…";
 
   try {
-    const res = await fetchWithTimeout(ORA_API_BASE + "/ori/history/leo-zones?limit=2", {}, 12000);
+    const res = await fetch(ORA_API_BASE + "/ori/global-summary");
     if (!res.ok) {
-      target.textContent = `Unable to load global summary (HTTP ${res.status}).`;
+      target.textContent = `Unable to load global ORI snapshot (HTTP ${res.status}).`;
       return;
     }
-    } catch (err) {
-      console.error("loadLEOZoneDeltas failed:", err);
-      target.textContent =
-        (err && err.name === "AbortError")
-          ? "LEO deltas request timed out (backend may be sleeping). Refresh or try again."
-          : "Unable to load LEO zone deltas (see console).";
-    }
+    
 
     const payload = await res.json(); // ✅ THIS LINE MUST EXIST
 
@@ -408,7 +402,6 @@
     }
 
     html += `</tbody></table>`;
-
     target.innerHTML = html;
   } catch (e) {
     console.error("loadGlobalRiskSummary failed:", e);
@@ -420,11 +413,10 @@
 async function loadVersion() {
   const target = document.getElementById("ora-version");
   if (!target) return;
+  
+  target.textContent = "Fetching ORA version…";
 
   try {
-    target.textContent = "Fetching ORA version…";
-
-    // If your backend uses a different endpoint, update it here
     const res = await fetch(ORA_API_BASE + "/meta/version");
     if (!res.ok) {
       target.textContent = "Version unavailable.";
@@ -437,13 +429,13 @@ async function loadVersion() {
     const ori = v.ori_version ?? "unknown";
     const stage = v.prototype_stage ?? "";
 
-    target.innerHTML =
+    target.innerHTML =`
       <strong>API:</strong> ${api}<br>
       <strong>ORI:</strong> ${ori}<br>
       ${stage ? `<span style="color:#9ca3af;">${stage}</span>` : ""}
     `;
   } catch (err) {
-    console.error("loadVersion failed:", e);
+    console.error("loadVersion failed:", err);
     target.textContent = "Version unavailable.";
   }
 }
