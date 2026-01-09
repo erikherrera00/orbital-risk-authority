@@ -27,6 +27,7 @@ from contracts import (
     LEOZonesResponse,
     ActiveLEOSummary,
     ActiveRegimes,
+    ActiveRegimesDelta,
     Methodology,
     TotalRegimes,
     LEOZonesHistory,
@@ -363,6 +364,47 @@ def ori_history_leo_zones(limit: int = 5, include_deltas: bool = True):
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"{type(e).__name__}: {e}")
+
+
+@app.get("/ori/deltas/active-regimes", response_model=ActiveRegimesDelta, tags=["ori"])
+def get_active_regimes_delta():
+    """
+    Returns the delta between the most recent and the immediately previous history snapshots.
+    """
+    snapshots = _load_history_files()  # uses backend/data/history/*.json
+    if len(snapshots) < 2:
+        raise HTTPException(status_code=400, detail="Need at least 2 history snapshots to compute deltas.")
+
+    prev = snapshots[-2]
+    curr = snapshots[-1]
+
+    t_prev = str(prev.get("snapshot_time_utc", "unknown"))
+    t_curr = str(curr.get("snapshot_time_utc", "unknown"))
+
+    prev_ar = prev.get("active_regimes", {}) or {}
+    curr_ar = curr.get("active_regimes", {}) or {}
+
+    # Your history format uses LEO/MEO/GEO keys
+    prev_leo = int(prev_ar.get("LEO", 0))
+    prev_meo = int(prev_ar.get("MEO", 0))
+    prev_geo = int(prev_ar.get("GEO", 0))
+
+    curr_leo = int(curr_ar.get("LEO", 0))
+    curr_meo = int(curr_ar.get("MEO", 0))
+    curr_geo = int(curr_ar.get("GEO", 0))
+
+    return ActiveRegimesDelta(
+        data_source="ORA history snapshots (backend/data/history/*.json)",
+        current_snapshot_time_utc=t_curr,
+        previous_snapshot_time_utc=t_prev,
+        leo_active=curr_leo,
+        meo_active=curr_meo,
+        geo_active=curr_geo,
+        delta_leo=curr_leo - prev_leo,
+        delta_meo=curr_meo - prev_meo,
+        delta_geo=curr_geo - prev_geo,
+        notes="Deltas compare the latest snapshot to the immediately previous snapshot in history.",
+    )
 
 
 @app.get("/ori/all-regimes", response_model=TotalRegimes, tags=["ori"])

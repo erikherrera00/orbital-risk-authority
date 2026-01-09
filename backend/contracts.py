@@ -87,6 +87,19 @@ class ActiveRegimesHistory(BaseModel):
     notes: str
 
 
+class ActiveRegimesDelta(BaseModel):
+    data_source: str
+    current_snapshot_time_utc: str
+    previous_snapshot_time_utc: str
+    leo_active: int
+    meo_active: int
+    geo_active: int
+    delta_leo: int
+    delta_meo: int
+    delta_geo: int
+    notes: str
+
+
 class LEOZoneHistoryRow(BaseModel):
     zone_label: str
     count: int
