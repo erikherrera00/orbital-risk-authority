@@ -1,0 +1,31 @@
+{
+  "updated_utc": "2026-01-08T00:00:00Z",
+  "data_source": "Publicly available operator disclosures and constellation summaries",
+  "purpose": "Curated operator watchlist for monitoring large-scale orbital population trends. This list is informational and non-predictive.",
+  "operators": [
+    {
+      "operator_name": "SpaceX / Starlink",
+      "orbit_band": "LEO",
+      "constellation_type": "Broadband communications",
+      "notes": "Largest active LEO constellation. High deployment cadence and rapid replenishment cycles make this operator relevant for population pressure and debris-mitigation transparency analysis.",
+      "public_references": [
+        "FCC constellation filings",
+        "SpaceX Starlink transparency reports",
+        "ITU frequency coordination records"
+      ]
+    },
+    {
+      "operator_name": "OneWeb",
+      "orbit_band": "LEO",
+      "constellation_type": "Broadband communications",
+      "notes": "Medium-to-large LEO constellation with structured deployment phases. Useful comparison case for disposal practices and long-term orbital persistence.",
+      "public_references": [
+        "FCC constellation filings",
+        "OneWeb regulatory disclosures",
+        "ITU filings"
+      ]
+    }
+  ],
+  "disclaimer": "Inclusion in this watchlist does not imply elevated risk or non-compliance. The watchlist exists to support transparency, longitudinal analysis, and public discussion of orbital population dynamics."
+}
+
