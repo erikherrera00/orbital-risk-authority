@@ -172,6 +172,8 @@
         <li>⚠️ ORI risk scores — <strong>Framework-driven, not predictive</strong></li>
       </ul>
     </section>
+    <h2 id="daily-brief">Daily Risk Brief</h2>
+    <div id="ora-brief" style="margin-top:0.5rem;">Loading brief…</div>
 
     <p style="margin-top:0.25rem; font-size:0.8rem; color:#9ca3af;">
       ORA Prototype <strong>v0.3</strong> – band-level Population Pressure Index (PPI),
@@ -577,6 +579,45 @@ async function loadActiveLEO() {
 }
 
 
+async function loadBrief() {
+  const target = document.getElementById("ora-brief");
+  if (!target) return;
+
+  const arrow = (n) => (n > 0 ? "↑" : n < 0 ? "↓" : "→");
+  const fmt = (n) => `${arrow(n)} ${n > 0 ? "+" : ""}${n.toLocaleString()}`;
+
+  try {
+    const res = await fetch(ORA_API_BASE + "/ori/brief");
+    if (!res.ok) {
+      target.textContent = "Brief unavailable.";
+      return;
+    }
+    const b = await res.json();
+
+    target.innerHTML = `
+      <div style="color:#9ca3af; font-size:0.9rem;">
+        Snapshot: <strong style="color:#e5e7eb;">${b.snapshot_time_utc}</strong>
+        <span style="margin-left:0.75rem;">Prev: ${b.previous_snapshot_time_utc}</span>
+      </div>
+
+      <div style="margin-top:0.5rem; display:flex; gap:1rem; flex-wrap:wrap;">
+        <div><strong>LEO:</strong> ${Number(b.active_regimes.LEO).toLocaleString()} <span style="color:#9ca3af;">(${fmt(Number(b.active_regime_deltas.LEO))})</span></div>
+        <div><strong>MEO:</strong> ${Number(b.active_regimes.MEO).toLocaleString()} <span style="color:#9ca3af;">(${fmt(Number(b.active_regime_deltas.MEO))})</span></div>
+        <div><strong>GEO:</strong> ${Number(b.active_regimes.GEO).toLocaleString()} <span style="color:#9ca3af;">(${fmt(Number(b.active_regime_deltas.GEO))})</span></div>
+      </div>
+
+      <div style="margin-top:0.6rem; display:flex; gap:0.75rem; flex-wrap:wrap;">
+        <a href="${ORA_API_BASE}/ori/brief" target="_blank" rel="noopener">API: /ori/brief</a>
+        <a href="${ORA_API_BASE}/docs/methodology" target="_blank" rel="noopener">Methodology</a>
+      </div>
+    `;
+  } catch (e) {
+    console.error("loadBrief failed:", e);
+    target.textContent = "Brief unavailable.";
+  }
+}
+
+
 async function loadActiveRegimes() {
   const el = document.getElementById("ora-regime-counts");
   if (!el) return;
@@ -723,6 +764,7 @@ document.addEventListener("DOMContentLoaded", () => {
   try { loadActiveLEO(); } catch (e) { console.error(e); }
   try { loadActiveRegimes(); } catch (e) { console.error(e); } 
   try { loadLEOZones(); } catch (e) { console.error(e); }
+  try { loadBrief(); } catch (e) { console.error(e); }
   try { loadLEOZoneDeltas(); } catch (e) { console.error(e); }
   try { loadVersion(); } catch (e) { console.error(e); }
 });

@@ -16,6 +16,7 @@ from contracts import TrackedObjectsSummary
 from fastapi import Query
 from contracts import ActiveRegimesHistory, ActiveRegimesHistoryPoint
 from datetime import datetime
+from typing import Any
 
 from contracts import (
     VersionInfo,
@@ -441,6 +442,52 @@ def _load_history_files() -> list[dict]:
             # skip bad files (never kill the API for one bad snapshot)
             continue
     return snapshots
+
+
+@app.get("/ori/brief", tags=["ori"])
+def ori_brief(limit: int = 2) -> dict[str, Any]:
+    """
+    Single endpoint for the homepage + external readers:
+    latest snapshot, active regime deltas, and LEO zone deltas.
+    """
+    snapshots = _load_history_files()
+    if not snapshots:
+        raise HTTPException(status_code=400, detail="No history snapshots found.")
+
+    snaps = snapshots[-max(1, min(10, int(limit))):]
+
+    curr = snaps[-1]
+    prev = snaps[-2] if len(snaps) >= 2 else None
+
+    t_curr = str(curr.get("snapshot_time_utc", "unknown"))
+    t_prev = str(prev.get("snapshot_time_utc", "unknown")) if prev else "none"
+
+    curr_ar = curr.get("active_regimes", {}) or {}
+    prev_ar = (prev.get("active_regimes", {}) or {}) if prev else {}
+
+    curr_leo = int(curr_ar.get("LEO", 0))
+    curr_meo = int(curr_ar.get("MEO", 0))
+    curr_geo = int(curr_ar.get("GEO", 0))
+
+    prev_leo = int(prev_ar.get("LEO", 0))
+    prev_meo = int(prev_ar.get("MEO", 0))
+    prev_geo = int(prev_ar.get("GEO", 0))
+
+    # LEO zones history already returns deltas, reuse your logic by calling the function you wrote
+    leo_hist = ori_history_leo_zones(limit=2, include_deltas=True)
+
+    return {
+        "data_source": "ORA history snapshots (backend/data/history/*.json)",
+        "snapshot_time_utc": t_curr,
+        "previous_snapshot_time_utc": t_prev,
+        "active_regimes": {"LEO": curr_leo, "MEO": curr_meo, "GEO": curr_geo},
+        "active_regime_deltas": {
+            "LEO": curr_leo - prev_leo,
+            "MEO": curr_meo - prev_meo,
+            "GEO": curr_geo - prev_geo,
+        },
+        "leo_zones_latest": leo_hist.points[-1].zones if leo_hist.points else [],
+    }
 
 
 @app.get("/ori/history/active-regimes", response_model=ActiveRegimesHistory, tags=["ori"])
