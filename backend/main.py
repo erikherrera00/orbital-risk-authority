@@ -638,23 +638,58 @@ def activate_leo_redirect():
     )
 
 
-@app.get("/docs/methodology", response_model=Methodology, tags=["docs"])
+@app.get("/docs/methodology", tags=["docs"])
 def docs_methodology():
-    return Methodology(
-        version="METH-0.5",
-        definitions={
-            "Data source": "CelesTrak active satellites CSV snapshot (GROUP=active, FORMAT=csv)",
-            "Snapshot time": "Derived from local cached snapshot file timestamp (UTC ISO 8601).",
-            "LEO/MEO/GEO regimes": "Regimes computed from mean motion / eccentricity rules in catalog module.",
-            "PPI": "Population Pressure Index: normalized 0–100 based on active object count by regime.",
-            "ORI": "Framework-driven risk score (not predictive) incorporating PPI and qualitative risk notes.",
-        },
-        notes=[
-            "ORA is a public prototype and does not provide conjunction prediction or collision probability.",
-            "All metrics are snapshot-based and may lag real-time conditions.",
-            "Definitions may evolve; contract endpoints will maintain backward compatibility.",
+    return {
+        "product": "Orbital Risk Authority (ORA)",
+        "status": "Public prototype",
+        "data_sources": [
+            {
+                "name": "CelesTrak Active Satellites Catalog",
+                "format": "CSV snapshot",
+                "usage": [
+                    "Active regime counts (LEO/MEO/GEO)",
+                    "LEO sub-band congestion (ZPI)",
+                    "Object counts used in Global ORI snapshot"
+                ],
+                "snapshot_handling": "Snapshot-based ingestion; cached locally to avoid live-feed abuse",
+            }
         ],
-    )
+        "metrics": {
+            "ORI": {
+                "description": "Orbit Risk Index",
+                "type": "Framework-driven (non-predictive)",
+                "notes": "Expresses relative risk posture by orbital regime; not a collision or conjunction predictor",
+            },
+            "PPI": {
+                "description": "Population Pressure Index",
+                "scale": "0–100",
+                "notes": "Normalized pressure derived from snapshot object counts within a regime",
+            },
+            "ZPI": {
+                "description": "Zone Pressure Index",
+                "scale": "0–100",
+                "notes": "Normalized congestion metric within LEO altitude sub-bands",
+            },
+        },
+        "auditability": {
+            "history_storage": "backend/data/history/*.json",
+            "delta_endpoints": [
+                "/ori/deltas/active-regimes",
+                "/ori/history/leo-zones"
+            ],
+            "validation": ".github/workflows/validate-history.yml",
+        },
+        "limitations": [
+            "Active satellites do not represent all tracked objects (debris and rocket bodies are underrepresented).",
+            "Altitude bins are derived from mean motion and are approximate.",
+            "Metrics are suitable for policy, monitoring, and trend analysis—not maneuver planning.",
+        ],
+        "versioning": {
+            "methodology_version": "METH-0.6",
+            "compatibility": "Endpoint fields may expand, but existing keys will not be removed without version bump",
+        },
+    }
 
 
 @app.get("/ori/operators", response_model=List[OperatorRisk], tags=["ori"])

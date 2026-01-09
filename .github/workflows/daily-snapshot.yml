@@ -1,0 +1,32 @@
+name: Daily ORA snapshot
+
+on:
+  schedule:
+    - cron: "15 6 * * *" # 06:15 UTC daily
+  workflow_dispatch:
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Generate history snapshot
+        run: |
+          python3 backend/tools/make_history_snapshot.py --force
+
+      - name: Commit & push
+        run: |
+          git config user.name "ora-bot"
+          git config user.email "ora-bot@users.noreply.github.com"
+          git add backend/data/history
+          git commit -m "Daily ORA history snapshot (UTC)" || exit 0
+          git push
+
