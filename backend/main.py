@@ -17,6 +17,7 @@ from fastapi import Query
 from contracts import ActiveRegimesHistory, ActiveRegimesHistoryPoint
 from datetime import datetime
 from typing import Any
+from operators import load_watchlist
 
 from contracts import (
     VersionInfo,
@@ -34,6 +35,8 @@ from contracts import (
     LEOZonesHistory,
     LEOZonesHistoryPoint,
     LEOZoneHistoryRow,
+    OperatorCard,
+    OperatorCardsResponse,
 )
 
 
@@ -145,6 +148,64 @@ def _compute_zone_deltas(prev_point: dict, cur_point: dict) -> dict:
         out_zones.append(z_out)
 
     return {"snapshot_time_utc": cur_point.get("snapshot_time_utc"), "zones": out_zones}
+
+
+def _fleet_pressure_index(fleet_size: int) -> float:
+    """
+    Prototype index: compress fleet size into 0–100 using log scaling.
+    This is NOT predictive; it's a consistent, auditable transformation.
+    """
+    if fleet_size <= 0:
+        return 0.0
+    # log10(1)=0; log10(100000)=5
+    v = (math.log10(fleet_size) / 5.0) * 100.0
+    return float(max(0.0, min(100.0, v)))
+
+
+def _risk_level_from_fpi(fpi: float) -> str:
+    if fpi >= 85:
+        return "Systemic"
+    if fpi >= 70:
+        return "High"
+    if fpi >= 50:
+        return "Elevated"
+    if fpi >= 30:
+        return "Moderate"
+    return "Low"
+
+
+@app.get("/ori/operators/{operator_slug}/card", response_model=OperatorCard, tags=["ori"])
+def get_operator_card(operator_slug: str):
+    wl = load_watchlist()
+    entries = wl.get("operators", []) or []
+
+    # find by slug (case-insensitive)
+    match = None
+    for e in entries:
+        if str(e.get("operator_slug", "")).lower() == operator_slug.lower():
+            match = e
+            break
+
+    if not match:
+        raise HTTPException(status_code=404, detail="Operator not found")
+
+    name = str(match.get("operator_name", "")).strip()
+    primary_orbit = str(match.get("primary_orbit", "Unknown")).strip()
+    fleet_size = int(match.get("fleet_size", 0) or 0)
+
+    fpi = _fleet_pressure_index(fleet_size)
+    risk_level = _risk_level_from_fpi(fpi)
+
+    return OperatorCard(
+        operator_slug=str(match.get("operator_slug", operator_slug)),
+        operator_name=name or operator_slug,
+        primary_orbit=primary_orbit,
+        fleet_size=fleet_size,
+        fleet_pressure_index=float(round(fpi, 2)),
+        risk_level=risk_level,  # type: ignore
+        disposal_posture=match.get("disposal_posture"),
+        notes=match.get("notes"),
+    )
 
 
 def compute_population_pressure(count: int) -> float:
@@ -420,6 +481,13 @@ def ori_all_regimes():
         geo_total=0,
     )
 
+@app.get("/ori/operators/watchlist", tags=["operators"])
+def get_operators_watchlist():
+    """
+    Returns the ORA operator watchlist data source (static JSON file).
+    """
+    return load_watchlist()
+
 
 HISTORY_DIR = Path(__file__).parent / "data" / "history"
 
@@ -442,6 +510,75 @@ def _load_history_files() -> list[dict]:
             # skip bad files (never kill the API for one bad snapshot)
             continue
     return snapshots
+
+
+@app.get("/ori/operators/cards", tags=["operators"])
+def get_operator_cards():
+    """
+    Returns operator 'cards' derived from the watchlist:
+    explainable posture + flags for quick evaluation.
+    """
+    wl = load_watchlist()
+    ops = wl.get("operators", []) if isinstance(wl, dict) else []
+
+    cards = []
+    for op in ops:
+        name = str(op.get("operator_name", "Unknown"))
+        slug = str(op.get("operator_slug", "") or "").strip()
+        primary_orbit = str(op.get("primary_orbit", "Unknown"))
+        fleet = int(op.get("fleet_size", 0) or 0)
+
+        notes = str(op.get("notes", "") or "")
+        nl = notes.lower()
+
+        # v0.1 flags (simple, explainable)
+        flags = []
+        if "largest" in nl:
+            flags.append("scale")
+        if "deployment" in nl or "cadence" in nl or "rapid" in nl or "replenishment" in nl:
+            flags.append("high-cadence")
+        if "debris" in nl:
+            flags.append("debris-risk")
+        if "transparency" in nl:
+            flags.append("transparency")
+
+        # Use stored risk_level if present; normalize to Green/Yellow/Red
+        rl = op.get("risk_level")
+        posture = "Yellow"
+        if isinstance(rl, str) and rl:
+            r = rl.strip().lower()
+            if r in ("low", "green"):
+                posture = "Green"
+            elif r in ("moderate", "yellow", "elevated"):
+                posture = "Yellow"
+            elif r in ("high", "red"):
+                posture = "Red"
+            else:
+                posture = "Yellow"
+        else:
+            # fallback posture heuristic
+            posture = "Green"
+            if fleet >= 1000 or "debris-risk" in flags:
+                posture = "Red"
+            elif fleet >= 200 or len(flags) >= 2:
+                posture = "Yellow"
+
+        cards.append({
+            "operator_slug": slug,
+            "operator_name": name,
+            "primary_orbit": primary_orbit,
+            "fleet_size": fleet,
+            "risk_flags": flags,
+            "ora_posture": posture,
+            "notes": notes,
+        })
+
+    return {
+        "data_source": "backend/data/operators_watchlist.json (operator watchlist)",
+        "snapshot_time_utc": wl.get("snapshot_time_utc"),
+        "count": len(cards),
+        "cards": cards,
+    }
 
 
 @app.get("/ori/brief", tags=["ori"])
