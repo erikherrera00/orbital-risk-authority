@@ -151,6 +151,17 @@ class OperatorCardsResponse(BaseModel):
     count: int
     card: List[OperatorCard]
 
+
+class OperatorDetailCard(BaseModel):
+    operator_slug: str
+    operator_name: str
+    primary_orbit: str
+    fleet_size: int
+    fleet_pressure_index: float
+    risk_level: str
+    disposal_posture: Optional[str] = None
+    notes: Optional[str] = None
+
 # ---------------------------
 # LEO Zones / Congestion
 # ---------------------------
