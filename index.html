@@ -236,6 +236,14 @@
     <div id="ori-operators" style="margin-top:0.75rem; font-size:0.95rem;">
       Loading operator fleet pressure…
     </div>
+    <h2>Operator Compliance Cards (Prototype)</h2>
+    <p style="color:#9ca3af; font-size:0.9rem;">
+      Prototype compliance/risk cards generated from ORA watchlist + framework indices (not predictive).
+    </p>
+    <div id="ora-operator-cards" style="margin-top:0.5rem; font-size:0.95rem;">
+      Loading operator cards…
+    </div>
+
     <h2>Live prototype: LEO Sub-Band Congestion</h2>
     <p style="color:#9ca3af; font-size:0.9rem;">
       Values below are derived from a CelesTrak active-satellites snapshot and represent
@@ -579,6 +587,74 @@ async function loadActiveLEO() {
 }
 
 
+async function loadOperatorCards() {
+  const target = document.getElementById("ora-operator-cards");
+  if (!target) return;
+
+  target.textContent = "Loading operator cards…";
+
+  try {
+    const res = await fetch(ORA_API_BASE + "/ori/operators/cards?limit=25");
+    if (!res.ok) {
+      target.textContent = `Unable to load operator cards (HTTP ${res.status}).`;
+      return;
+    }
+
+    const payload = await res.json();
+    const ops = payload.operators || [];
+    if (!Array.isArray(ops) || ops.length === 0) {
+      target.textContent = "No operators found in watchlist.";
+      return;
+    }
+
+    let html = "";
+    html += `<div style="margin:0.25rem 0 0.75rem 0; color:#9ca3af; font-size:0.85rem;">
+      Snapshot: ${payload.snapshot_time_utc ?? "unknown"} · Source: watchlist
+    </div>`;
+
+    html += `<table style="width:100%; border-collapse:collapse; margin-top:0.5rem; font-size:0.9rem;">
+      <thead><tr>
+        <th style="text-align:left; padding:0.4rem 0;">Operator</th>
+        <th style="text-align:left; padding:0.4rem 0;">Orbit</th>
+        <th style="text-align:left; padding:0.4rem 0;">Fleet</th>
+        <th style="text-align:left; padding:0.4rem 0;">FPI</th>
+        <th style="text-align:left; padding:0.4rem 0;">Risk</th>
+        <th style="text-align:left; padding:0.4rem 0;">Notes</th>
+      </tr></thead><tbody>`;
+
+    for (const o of ops) {
+      const name = o.operator_name ?? o.operator_slug ?? "—";
+      const orbit = o.primary_orbit ?? "—";
+      const fleet = Number(o.fleet_size ?? 0);
+      const fpi = Number(o.fleet_pressure_index ?? 0);
+      const risk = o.risk_level ?? "—";
+      const notes = o.notes ?? "";
+
+      const cardUrl = ORA_API_BASE + "/ori/operators/" + encodeURIComponent(o.operator_slug) + "/card";
+
+      html += `<tr>
+        <td style="padding:0.3rem 0;">
+          <a href="${cardUrl}" target="_blank" rel="noopener noreferrer" style="color:#93c5fd; text-decoration:none;">
+            ${name}
+          </a>
+        </td>
+        <td style="padding:0.3rem 0;">${orbit}</td>
+        <td style="padding:0.3rem 0;">${fleet.toLocaleString()}</td>
+        <td style="padding:0.3rem 0;">${fpi.toFixed(1)}</td>
+        <td style="padding:0.3rem 0;">${risk}</td>
+        <td style="padding:0.3rem 0;">${notes}</td>
+      </tr>`;
+    }
+
+    html += `</tbody></table>`;
+    target.innerHTML = html;
+  } catch (e) {
+    console.error("loadOperatorCards failed:", e);
+    target.textContent = "Unable to load operator cards (see console).";
+  }
+}
+
+
 async function loadBrief() {
   const target = document.getElementById("ora-brief");
   if (!target) return;
@@ -766,6 +842,7 @@ document.addEventListener("DOMContentLoaded", () => {
   try { loadLEOZones(); } catch (e) { console.error(e); }
   try { loadBrief(); } catch (e) { console.error(e); }
   try { loadLEOZoneDeltas(); } catch (e) { console.error(e); }
+  try { loadOperatorCards(); } catch (e) { console.error(e); }
   try { loadVersion(); } catch (e) { console.error(e); }
 });
 

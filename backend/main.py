@@ -174,7 +174,11 @@ def _risk_level_from_fpi(fpi: float) -> str:
     return "Low"
 
 
-@app.get("/ori/operators/{operator_slug}/card", response_model=OperatorCard, tags=["ori"])
+@app.get(
+    "/ori/operators/{operator_slug}/card", 
+    response_model=OperatorDetailCard, 
+    tags=["operators"],
+)
 def get_operator_card(operator_slug: str):
     wl = load_watchlist()
     entries = wl.get("operators", []) or []

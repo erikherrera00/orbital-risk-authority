@@ -1,7 +1,7 @@
 # backend/contracts.py
 from __future__ import annotations
 
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Literal
 from pydantic import BaseModel, Field
 
 
@@ -117,6 +117,39 @@ class LEOZonesHistory(BaseModel):
     data_source: str
     points: list[LEOZonesHistoryPoint]
     notes: str
+
+
+class OperatorWatchlistEntry(BaseModel):
+    operator_slug: str
+    operator_name: str
+    primary_orbit: str  # e.g., "LEO", "MEO", "GEO"
+    fleet_size: int
+    disposal_posture: Optional[str] = None  # "Good", "Mixed", "Unknown"
+    notes: Optional[str] = None
+
+
+class OperatorCard(BaseModel):
+    operator_slug: str
+    operator_name: str
+    primary_orbit: str
+    fleet_size: int
+    risk_flags: List[str]
+    ora_posture: str
+    notes: str
+
+    # Framework metrics (prototype, not predictive)
+    fleet_pressure_index: float  # 0–100
+    risk_level: Literal["Low", "Moderate", "Elevated", "High", "Systemic"]
+
+    disposal_posture: Optional[str] = None
+    notes: Optional[str] = None
+
+
+class OperatorCardsResponse(BaseModel):
+    data_source: str
+    snapshot_time_utc: Optional[str] = None
+    count: int
+    card: List[OperatorCard]
 
 # ---------------------------
 # LEO Zones / Congestion
