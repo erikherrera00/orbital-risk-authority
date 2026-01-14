@@ -533,86 +533,35 @@ async function loadLEOZoneDeltas() {
 }
 
 
-async function loadActiveLEO() {
-  const target = document.getElementById("ora-active-leo");
-  if (!target) {
-    console.error("Missing element: #ora-active-leo");
-    return;
-  }
-
-  // Always show something immediately
-  target.textContent = "Loading active LEO snapshot…";
-
-  try {
-    const res = await fetch(ORA_API_BASE + "/ori/active-leo");
-    if (!res.ok) {
-      target.textContent = `Unable to load active LEO snapshot (HTTP ${res.status}).`;
-      return;
-    }
-
-    const data = await res.json();
-
-    const rawCount =
-      data.leo_active_count ??
-      data.active_leo_count ??
-      data.count ??
-      null;
-
-    const snapshot =
-      data.snapshot_time_utc ??
-      data.snapshot ??
-      "unknown";
-
-    if (rawCount === null) {
-      target.textContent = "Active LEO loaded but count field not found.";
-      console.warn("active-leo payload:", data);
-      return;
-    }
-
-    const countNum = Number(rawCount);
-    const countText = Number.isFinite(countNum) ? countNum.toLocaleString() : String(rawCount);
-
-    target.innerHTML = `
-      <div style="font-size:1.05rem; color:#e5e7eb;">
-        <strong>Active LEO satellites:</strong> ${countText}
-      </div>
-      <div style="margin-top:0.35rem; color:#9ca3af; font-size:0.85rem;">
-        Snapshot: ${snapshot} · Source: CelesTrak active catalog
-      </div>
-    `;
-  } catch (err) {
-    console.error("loadActiveLEO failed:", err);
-    target.textContent = "Unable to load active LEO snapshot (see console).";
-  }
-}
-
-
+<script>
 async function loadOperatorCards() {
   const target = document.getElementById("ora-operator-cards");
   if (!target) return;
 
-  target.textContent = "Loading operator cards…";
+  target.textContent = "Loading operator compliance cards…";
 
   try {
-    const res = await fetch(ORA_API_BASE + "/ori/operators/cards?limit=25");
+    const res = await fetch(ORA_API_BASE + "/ori/operators/cards");
     if (!res.ok) {
       target.textContent = `Unable to load operator cards (HTTP ${res.status}).`;
       return;
     }
 
     const payload = await res.json();
-    const ops = payload.operators || [];
-    if (!Array.isArray(ops) || ops.length === 0) {
+
+    const cards =
+      payload.operators ||
+      payload.cards ||
+      payload.data ||
+      [];
+
+    if (!Array.isArray(cards) || cards.length === 0) {
       target.textContent = "No operators found in watchlist.";
+      console.warn("Operator cards payload:", payload);
       return;
     }
 
-    let html = "";
-    html += `<div style="margin:0.25rem 0 0.75rem 0; color:#9ca3af; font-size:0.85rem;">
-      Snapshot: ${payload.snapshot_time_utc ?? "unknown"} · Source: watchlist
-    </div>`;
-
-    html += `<table style="width:100%; border-collapse:collapse; margin-top:0.5rem; font-size:0.9rem;">
+    let html = `<table style="width:100%; border-collapse:collapse; margin-top:0.5rem; font-size:0.9rem;">
       <thead><tr>
         <th style="text-align:left; padding:0.4rem 0;">Operator</th>
         <th style="text-align:left; padding:0.4rem 0;">Orbit</th>
@@ -622,22 +571,16 @@ async function loadOperatorCards() {
         <th style="text-align:left; padding:0.4rem 0;">Notes</th>
       </tr></thead><tbody>`;
 
-    for (const o of ops) {
-      const name = o.operator_name ?? o.operator_slug ?? "—";
-      const orbit = o.primary_orbit ?? "—";
-      const fleet = Number(o.fleet_size ?? 0);
-      const fpi = Number(o.fleet_pressure_index ?? 0);
-      const risk = o.risk_level ?? "—";
-      const notes = o.notes ?? "";
-
-      const cardUrl = ORA_API_BASE + "/ori/operators/" + encodeURIComponent(o.operator_slug) + "/card";
+    for (const c of cards) {
+      const name = c.operator_name ?? c.name ?? "—";
+      const orbit = c.primary_orbit ?? c.orbit_band ?? "—";
+      const fleet = Number(c.fleet_size ?? 0);
+      const fpi = Number(c.fleet_pressure_index ?? c.fpi ?? 0);
+      const risk = c.risk_level ?? "—";
+      const notes = c.notes ?? "";
 
       html += `<tr>
-        <td style="padding:0.3rem 0;">
-          <a href="${cardUrl}" target="_blank" rel="noopener noreferrer" style="color:#93c5fd; text-decoration:none;">
-            ${name}
-          </a>
-        </td>
+        <td style="padding:0.3rem 0;">${name}</td>
         <td style="padding:0.3rem 0;">${orbit}</td>
         <td style="padding:0.3rem 0;">${fleet.toLocaleString()}</td>
         <td style="padding:0.3rem 0;">${fpi.toFixed(1)}</td>
@@ -653,7 +596,11 @@ async function loadOperatorCards() {
     target.textContent = "Unable to load operator cards (see console).";
   }
 }
+</script>
 
+
+async function loadOperatorCards() {
+  const target = document.getElementById("ora-operator-card
 
 async function loadBrief() {
   const target = document.getElementById("ora-brief");
