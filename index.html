@@ -421,6 +421,53 @@ async function loadGlobalRiskSummary() {
 }
 
 
+async function loadActiveLEO() {
+  const target = document.getElementById("ora-active-leo");
+  if (!target) return;
+
+  target.textContent = "Loading active LEO snapshot…";
+
+  try {
+    const res = await fetch(ORA_API_BASE + "/ori/active-leo");
+    if (!res.ok) {
+      target.textContent = `Unable to load active LEO snapshot (HTTP ${res.status}).`;
+      return;
+    }
+
+    const data = await res.json();
+
+    const count =
+      data.leo_active_count ??
+      data.leo_active ??
+      data.count ??
+      null;
+
+    const snap =
+      data.snapshot_time_utc ??
+      data.snapshot ??
+      "unknown";
+
+    if (count === null) {
+      target.textContent = "Active LEO snapshot returned no count.";
+      console.warn("active-leo payload:", data);
+      return;
+    }
+
+    target.innerHTML = `
+      <div style="font-size:1.05rem; color:#e5e7eb;">
+        <strong>Active LEO satellites:</strong> ${Number(count).toLocaleString()}
+      </div>
+      <div style="margin-top:0.35rem; color:#9ca3af; font-size:0.85rem;">
+        Snapshot: ${snap} · Source: CelesTrak active catalog
+      </div>
+    `;
+  } catch (e) {
+    console.error("loadActiveLEO failed:", e);
+    target.textContent = "Unable to load active LEO snapshot (see console).";
+  }
+}
+
+
 async function loadVersion() {
   const target = document.getElementById("ora-version");
   if (!target) return;
