@@ -269,6 +269,9 @@
     <div id="ora-active-leo" style="margin-top:0.5rem; font-size:0.95rem;">
       Loading active LEO snapshot…
     </div>
+    <h2>Tracked Object Totals (Prototype)</h2>
+    <div id="ora-tracked" style="margin-top:0.5rem;">Loading tracked totals…</div>
+
     <h2>Key documents (prototype)</h2>
     <div class="grid">
       <div class="card">
@@ -464,6 +467,39 @@ async function loadActiveLEO() {
   } catch (e) {
     console.error("loadActiveLEO failed:", e);
     target.textContent = "Unable to load active LEO snapshot (see console).";
+  }
+}
+
+
+async function loadTrackedTotals() {
+  const target = document.getElementById("ora-tracked");
+  if (!target) return;
+
+  target.textContent = "Loading tracked totals…";
+
+  try {
+    const res = await fetch(ORA_API_BASE + "/ori/tracked-objects");
+    if (!res.ok) {
+      target.textContent = "Unable to load tracked totals.";
+      return;
+    }
+    const d = await res.json();
+
+    target.innerHTML = `
+      <div style="font-size:1.05rem; color:#e5e7eb;">
+        <strong>Total tracked objects:</strong> ${Number(d.tracked_total).toLocaleString()}
+      </div>
+      <div style="margin-top:0.35rem; color:#9ca3af; font-size:0.85rem;">
+        Active: ${Number(d.active_total).toLocaleString()} · Inactive: ${Number(d.inactive_total).toLocaleString()}
+        <br>Snapshot: ${d.snapshot_time_utc}
+      </div>
+      <div style="margin-top:0.35rem; color:#9ca3af; font-size:0.85rem;">
+        Source: ${d.data_source}
+      </div>
+    `;
+  } catch (e) {
+    console.error(e);
+    target.textContent = "Unable to load tracked totals.";
   }
 }
 
@@ -780,6 +816,27 @@ async function loadLEOZones() {
 }
 
 
+@app.get("/docs/methodology", response_model=Methodology, tags=["docs"])
+def docs_methodology():
+    return Methodology(
+        version="METH-0.6",
+        definitions={
+            "Data source (active)": "CelesTrak active satellites CSV snapshot (GROUP=active, FORMAT=csv) cached by ORA.",
+            "Snapshot time": "Timestamp derived from the cached snapshot file metadata (UTC).",
+            "Regime classification": "LEO/MEO/GEO computed using mean motion and eccentricity heuristics (prototype definition).",
+            "PPI": "Population Pressure Index (0–100): normalized within each regime using active object counts; framework metric, not predictive.",
+            "ZPI": "Zone Pressure Index (0–100): normalized within LEO zones derived from approximate altitude bins (from mean motion).",
+            "ORI": "Orbital Risk Index: framework-driven score combining population pressure and qualitative risk posture. Not a collision predictor.",
+            "Tracked objects": "Prototype metric representing total tracked objects (active + inactive). Wired to full catalog ingestion in future versions."
+        },
+        notes=[
+            "ORA does not perform conjunction assessment or collision probability estimation.",
+            "Metrics are snapshot-based and may lag real-time orbital conditions.",
+            "This is a public prototype intended for transparency, benchmarking, and policy/compliance discussion."
+        ],
+    )
+
+
 async function loadOperatorRisk() {
   const target = document.getElementById("ori-operators");
   if (!target) return;
@@ -832,6 +889,7 @@ document.addEventListener("DOMContentLoaded", () => {
   try { loadBrief(); } catch (e) { console.error(e); }
   try { loadLEOZoneDeltas(); } catch (e) { console.error(e); }
   try { loadOperatorCards(); } catch (e) { console.error(e); }
+  try { loadTrackedTotals(); } catch (e) { console.error(e); }
   try { loadVersion(); } catch (e) { console.error(e); }
 });
 

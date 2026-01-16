@@ -15,6 +15,9 @@ class VersionInfo(BaseModel):
     status: str = Field(..., description="Deployment status label, e.g. stable/dev")
 
 
+RiskLevel = Literal["Low", "Moderate", "Elevated", "High", "Critical"]
+
+
 # ---------------------------
 # ORI / Global Summary
 # ---------------------------
@@ -81,6 +84,14 @@ class ActiveRegimesHistoryPoint(BaseModel):
     delta_geo: int
 
 
+class ActiveRegimes(BaseModel):
+    data_source: str
+    snapshot_time_utc: str
+    leo_active: int
+    meo_active: int
+    geo_active: int
+
+
 class ActiveRegimesHistory(BaseModel):
     data_source: str
     points: list[ActiveRegimesHistoryPoint]
@@ -145,6 +156,12 @@ class OperatorCard(BaseModel):
     notes: Optional[str] = None
 
 
+class OperatorCards(BaseModel):
+    data_source: str
+    snapshot_time_utc: str
+    operators: List[OperatorCard]
+
+
 class OperatorCardsResponse(BaseModel):
     data_source: str
     snapshot_time_utc: Optional[str] = None
@@ -178,6 +195,23 @@ class LEOZonesResponse(BaseModel):
     data_source: str
     snapshot_time_utc: str
     zones: List[LEOZoneRisk]
+
+
+class LEOZoneHistoryRow(BaseModel):
+    zone_label: str
+    count: int
+    zpi: float
+    delta_count: int = 0
+    delta_zpi: float = 0.0
+
+class LEOZonesHistoryPoint(BaseModel):
+    snapshot_time_utc: str
+    zones: List[LEOZoneHistoryRow]
+
+class LEOZonesHistory(BaseModel):
+    data_source: str
+    points: List[LEOZonesHistoryPoint]
+    notes: Optional[str] = None
 
 
 # ---------------------------

@@ -1,0 +1,8 @@
+{
+  "data_source": "Prototype: tracked totals (active + inactive). Source will be upgraded to full CelesTrak catalog ingestion.",
+  "snapshot_time_utc": "2026-01-10T06:45:30Z",
+  "tracked_total": 35000,
+  "active_total": 14050,
+  "inactive_total": 20950,
+  "notes": "Prototype values for UI + contract. Replace with real catalog ingestion when ready."
+}

@@ -269,3 +269,55 @@ def count_active_regimes(objects: List[CatalogRow]) -> dict[str, int]:
             counts[regime] += 1
     return counts
 
+# ============================================================
+# Canonical LEO zone computation (used by API + history)
+# ============================================================
+
+def compute_leo_zones_from_active_catalog():
+    """
+    Compute LEO sub-band congestion zones from the active catalog.
+    Returns objects with:
+      - zone_label (str)
+      - count (int)
+      - zpi (float, 0–100)
+    """
+
+    # Reuse the same logic already powering /ori/leo-zones-real
+    # If you later change the binning logic, it updates everywhere.
+    objects = load_active_catalog_cached()
+
+    # Mean-motion → approximate altitude bins (same as main.py)
+    zones = {
+        "LEO-1": {"range": (300, 500), "count": 0},
+        "LEO-2": {"range": (500, 800), "count": 0},
+        "LEO-3": {"range": (800, 1200), "count": 0},
+        "LEO-4": {"range": (1200, 2000), "count": 0},
+    }
+
+    for obj in objects:
+        try:
+            alt_km = mean_motion_to_altitude_km(obj.mean_motion)
+        except Exception:
+            continue
+
+        for label, z in zones.items():
+            lo, hi = z["range"]
+            if lo <= alt_km < hi:
+                z["count"] += 1
+                break
+
+    max_count = max(z["count"] for z in zones.values()) or 1
+
+    out = []
+    for label, z in zones.items():
+        zpi = round((z["count"] / max_count) * 100.0, 2)
+        out.append(
+            {
+                "zone_label": label,
+                "count": z["count"],
+                "zpi": zpi,
+            }
+        )
+
+    return out
+
