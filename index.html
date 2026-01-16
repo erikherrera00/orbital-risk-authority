@@ -816,27 +816,6 @@ async function loadLEOZones() {
 }
 
 
-@app.get("/docs/methodology", response_model=Methodology, tags=["docs"])
-def docs_methodology():
-    return Methodology(
-        version="METH-0.6",
-        definitions={
-            "Data source (active)": "CelesTrak active satellites CSV snapshot (GROUP=active, FORMAT=csv) cached by ORA.",
-            "Snapshot time": "Timestamp derived from the cached snapshot file metadata (UTC).",
-            "Regime classification": "LEO/MEO/GEO computed using mean motion and eccentricity heuristics (prototype definition).",
-            "PPI": "Population Pressure Index (0–100): normalized within each regime using active object counts; framework metric, not predictive.",
-            "ZPI": "Zone Pressure Index (0–100): normalized within LEO zones derived from approximate altitude bins (from mean motion).",
-            "ORI": "Orbital Risk Index: framework-driven score combining population pressure and qualitative risk posture. Not a collision predictor.",
-            "Tracked objects": "Prototype metric representing total tracked objects (active + inactive). Wired to full catalog ingestion in future versions."
-        },
-        notes=[
-            "ORA does not perform conjunction assessment or collision probability estimation.",
-            "Metrics are snapshot-based and may lag real-time orbital conditions.",
-            "This is a public prototype intended for transparency, benchmarking, and policy/compliance discussion."
-        ],
-    )
-
-
 async function loadOperatorRisk() {
   const target = document.getElementById("ori-operators");
   if (!target) return;
