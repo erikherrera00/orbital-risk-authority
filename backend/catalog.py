@@ -9,6 +9,7 @@ import math
 from typing import Tuple
 from functools import lru_cache
 from typing import Optional
+import json
 
 DATA_FILE = Path(__file__).parent / "data" / "active-satellites.csv"
 
@@ -268,6 +269,48 @@ def count_active_regimes(objects: List[CatalogRow]) -> dict[str, int]:
         if regime in counts:
             counts[regime] += 1
     return counts
+
+
+TRACKED_TOTAL_FILE = Path(__file__).parent / "data" / "tracked_total.json"
+
+def load_tracked_totals() -> dict:
+    """
+    Loads tracked object totals snapshot from backend/data/tracked_total.json.
+    Always returns a complete dict with required keys.
+    """
+    # Fallbacks if file missing or incomplete
+    fallback_time = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+    fallback = {
+        "data_source": "Tracked object totals snapshot (missing file; fallback)",
+        "snapshot_time_utc": fallback_time,
+        "tracked_objects_total": 0,
+        "active_satellites": 0,
+        "inactive_or_debris_estimate": 0,
+        "notes": "backend/data/tracked_total.json not found; using fallback.",
+    }
+
+    if not TRACKED_TOTAL_FILE.exists():
+        return fallback
+
+    try:
+        data = json.loads(TRACKED_TOTAL_FILE.read_text(encoding="utf-8"))
+    except Exception:
+        return fallback
+
+    # Normalize + enforce required fields
+    out = dict(fallback)
+    out.update({k: data.get(k, out[k]) for k in out.keys()})
+
+    # Coerce ints safely
+    for k in ("tracked_objects_total", "active_satellites", "inactive_or_debris_estimate"):
+        try:
+            out[k] = int(out.get(k) or 0)
+        except Exception:
+            out[k] = 0
+
+    out["data_source"] = str(out.get("data_source") or fallback["data_source"])
+    out["snapshot_time_utc"] = str(out.get("snapshot_time_utc") or fallback_time)
+    return out
 
 # ============================================================
 # Canonical LEO zone computation (used by API + history)

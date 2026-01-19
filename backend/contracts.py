@@ -179,6 +179,15 @@ class OperatorDetailCard(BaseModel):
     disposal_posture: Optional[str] = None
     notes: Optional[str] = None
 
+
+class TrackedObjectsSummary(BaseModel):
+    data_source: str
+    snapshot_time_utc: str
+    tracked_objects_total: int
+    active_satellites: int
+    inactive_or_debris_estimate: int
+    notes: Optional[str] = None
+
 # ---------------------------
 # LEO Zones / Congestion
 # ---------------------------

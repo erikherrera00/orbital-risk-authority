@@ -1057,23 +1057,15 @@ def get_active_regimes():
 TRACKED_TOTALS_FILE = Path(__file__).parent / "data" / "tracked_totals.json"
 
 @app.get("/ori/tracked-objects", response_model=TrackedObjectsSummary, tags=["ori"])
-def ori_tracked_objects():
-    if not TRACKED_TOTALS_FILE.exists():
-        raise HTTPException(status_code=500, detail="tracked_totals.json missing on server")
-
-    payload = json.loads(TRACKED_TOTALS_FILE.read_text(encoding="utf-8"))
-    active = len(catalog.load_active_catalog_cached())
-
-    total = int(payload.get("tracked_objects_total", 0))
-    snapshot_time = payload.get("snapshot_time_utc", catalog.get_snapshot_timestamp_iso())
-
+def get_tracked_objects():
+    data = catalog.load_tracked_totals()
     return TrackedObjectsSummary(
-        data_source=payload.get("data_source", "Tracked object totals snapshot"),
-        snapshot_time_utc=snapshot_time,
-        tracked_objects_total=total,
-        active_satellites=active,
-        inactive_or_debris_estimate=max(0, total - active),
-        notes=payload.get("notes", "Macro totals; not used for regime classification without elements."),
+        data_source=data["data_source"],
+        snapshot_time_utc=data["snapshot_time_utc"],
+        tracked_objects_total=data["tracked_objects_total"],
+        active_satellites=data["active_satellites"],
+        inactive_or_debris_estimate=data["inactive_or_debris_estimate"],
+        notes=data.get("notes"),
     )
 
 
