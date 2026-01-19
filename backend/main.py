@@ -41,58 +41,26 @@ from contracts import (
 )
 
 
-app = FastAPI(
-    title="Orbital Risk Authority API",
-    description="API for the Orbital Risk Index (ORI) prototype",
-    version="0.1.0",
-)
-
-
-ALLOWED_ORIGINS = [
+CORS_ORIGINS = [
+    # GitHub Pages (production)
     "https://erikherrera00.github.io",
-    "http://127.0.0.1:8080",
+    "https://erikherrera00.github.io/orbital-risk-authority",
+
+    # Local frontend dev
     "http://localhost:8080",
-    "http://127.0.0.1:5500",
+    "http://127.0.0.1:8080",
     "http://localhost:5500",
+    "http://127.0.0.1:5500",
 ]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=ALLOWED_ORIGINS,
+    allow_origins=CORS_ORIGINS,
     allow_credentials=False,
     allow_methods=["GET", "OPTIONS"],
     allow_headers=["*"],
 )
 
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[
-        "https://erikherrera00.github.io",
-        "http://localhost:8000",
-        "http://127.0.0.1:8000",
-    ],
-    allow_credentials=False,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-# CORS: allow your GitHub Pages site to call this API
-origins = [
-    "http://localhost:8000",
-    "http://127.0.0.1:8000",
-    # Replace this with your actual GitHub Pages URL:
-    "https://erikherrera00.github.io",
-    "https://erikherrera00.github.io/orbital-risk-authority",
-]
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=False,
-    allow_methods=["GET"],
-    allow_headers=["*"],
-)
 
 # Approximate tracked object counts per band (prototype values, to be refined)
 BAND_OBJECT_COUNTS = {
