@@ -41,6 +41,12 @@ from contracts import (
 )
 
 
+app = FastAPI(
+    title="Orbital Risk Authority API",
+    description="API for the Orbital Risk Index (ORI) prototype",
+    version="0.6.0",
+)
+
 CORS_ORIGINS = [
     # GitHub Pages (production)
     "https://erikherrera00.github.io",
