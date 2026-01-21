@@ -1,8 +1,9 @@
 {
-  "data_source": "ORA tracked totals snapshot (manual seed; will be automated)",
-  "snapshot_time_utc": "2026-01-10T06:45:30Z",
-  "tracked_objects_total": 52000,
-  "active_satellites": 14050,
-  "inactive_or_debris_estimate": 37950,
-  "notes": "Seeded for prototype credibility. Replace with automated ingestion from authoritative catalog(s) once wired."
+  "data_source": "Tracked object totals snapshot",
+  "snapshot_time_utc": "2026-01-18T00:00:00Z",
+  "tracked_objects_total": 0,
+  "active_satellites": 0,
+  "inactive_or_debris_estimate": 0,
+  "notes": "v1: active_satellites is real (computed from cached CelesTrak active catalog). tracked_objects_total remains placeholder until a reliable totals feed is wired."
 }
+

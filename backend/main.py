@@ -1032,14 +1032,27 @@ TRACKED_TOTALS_FILE = Path(__file__).parent / "data" / "tracked_totals.json"
 
 @app.get("/ori/tracked-objects", response_model=TrackedObjectsSummary, tags=["ori"])
 def get_tracked_objects():
-    data = catalog.load_tracked_totals()
+    if not TRACKED_TOTAL_PATH.exists():
+        raise HTTPException(status_code=500, detail="tracked_total.json missing")
+
+    base = json.loads(TRACKED_TOTAL_PATH.read_text(encoding="utf-8"))
+
+    # REAL: active satellites from cached CelesTrak active catalog
+    active = catalog.load_active_catalog_cached()
+    active_count = len(active)
+
+    tracked_total = int(base.get("tracked_objects_total", 0) or 0)
+
+    # If tracked_total is unknown, leave estimate at 0 (v1). Once wired, this becomes meaningful.
+    inactive_est = max(0, tracked_total - active_count) if tracked_total > 0 else 0
+
     return TrackedObjectsSummary(
-        data_source=data["data_source"],
-        snapshot_time_utc=data["snapshot_time_utc"],
-        tracked_objects_total=data["tracked_objects_total"],
-        active_satellites=data["active_satellites"],
-        inactive_or_debris_estimate=data["inactive_or_debris_estimate"],
-        notes=data.get("notes"),
+        data_source=str(base.get("data_source", "Tracked object totals snapshot")),
+        snapshot_time_utc=str(base.get("snapshot_time_utc", "unknown")),
+        tracked_objects_total=tracked_total,
+        active_satellites=active_count,
+        inactive_or_debris_estimate=inactive_est,
+        notes=str(base.get("notes", "")) or None,
     )
 
 
