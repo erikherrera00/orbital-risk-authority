@@ -269,9 +269,16 @@
     <div id="ora-active-leo" style="margin-top:0.5rem; font-size:0.95rem;">
       Loading active LEO snapshot…
     </div>
+    <h2>Tracked Objects (Prototype)</h2>
+    <p class="subtle-note">
+      Aggregate tracked objects view. Active satellites are real (CelesTrak snapshot).
+      Total tracked objects will be populated once authoritative totals feed is wired.
+    </p>
+    <div id="ora-tracked-objects">Loading tracked objects…</div>
+
     <h2>Tracked Object Totals (Prototype)</h2>
     <div id="ora-tracked" style="margin-top:0.5rem;">Loading tracked totals…</div>
-
+ 
     <h2>Key documents (prototype)</h2>
     <div class="grid">
       <div class="card">
@@ -467,6 +474,52 @@ async function loadActiveLEO() {
   } catch (e) {
     console.error("loadActiveLEO failed:", e);
     target.textContent = "Unable to load active LEO snapshot (see console).";
+  }
+}
+
+
+async function loadTrackedObjects() {
+  const target = document.getElementById("ora-tracked-objects");
+  if (!target) return;
+
+  target.textContent = "Loading tracked objects…";
+
+  try {
+    const res = await fetch(ORA_API_BASE + "/ori/tracked-objects");
+    if (!res.ok) {
+      target.textContent = "Unable to load tracked objects.";
+      return;
+    }
+
+    const data = await res.json();
+
+    const total = data.tracked_objects_total > 0
+      ? data.tracked_objects_total.toLocaleString()
+      : "—";
+
+    const active = data.active_satellites.toLocaleString();
+
+    const inactive = data.inactive_or_debris_estimate > 0
+      ? data.inactive_or_debris_estimate.toLocaleString()
+      : "—";
+
+    target.innerHTML = `
+      <div style="font-size:1.05rem;">
+        <strong>Total tracked objects:</strong> ${total}
+      </div>
+      <div style="margin-top:0.3rem;">
+        <strong>Active satellites:</strong> ${active}
+      </div>
+      <div style="margin-top:0.3rem;">
+        <strong>Inactive / debris (est.):</strong> ${inactive}
+      </div>
+      <div class="subtle-note" style="margin-top:0.5rem;">
+        Snapshot: ${data.snapshot_time_utc}
+      </div>
+    `;
+  } catch (e) {
+    console.error(e);
+    target.textContent = "Unable to load tracked objects.";
   }
 }
 
@@ -868,6 +921,7 @@ document.addEventListener("DOMContentLoaded", () => {
   try { loadBrief(); } catch (e) { console.error(e); }
   try { loadLEOZoneDeltas(); } catch (e) { console.error(e); }
   try { loadOperatorCards(); } catch (e) { console.error(e); }
+  try { loadTrackedObjects(); } catch (e) { console.error(e); }
   try { loadTrackedTotals(); } catch (e) { console.error(e); }
   try { loadVersion(); } catch (e) { console.error(e); }
 });
