@@ -1024,12 +1024,13 @@ def get_active_regimes():
     )
 
 
-TRACKED_TOTALS_FILE = Path(__file__).parent / "data" / "tracked_totals.json"
+TRACKED_TOTAL_PATH = Path(__file__).parent / "data" / "tracked_total.json"
+
 
 @app.get("/ori/tracked-objects", response_model=TrackedObjectsSummary, tags=["ori"])
 def get_tracked_objects():
     if not TRACKED_TOTAL_PATH.exists():
-        raise HTTPException(status_code=500, detail="tracked_total.json missing")
+        raise HTTPException(status_code=404, detail="tracked_total.json not found")
 
     base = json.loads(TRACKED_TOTAL_PATH.read_text(encoding="utf-8"))
 
