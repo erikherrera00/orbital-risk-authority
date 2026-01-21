@@ -278,6 +278,14 @@
 
     <h2>Tracked Object Totals (Prototype)</h2>
     <div id="ora-tracked" style="margin-top:0.5rem;">Loading tracked totals…</div>
+    <h2>Tracked Objects (v1.1)</h2>
+    <p style="color:#9ca3af; font-size:0.9rem;">
+      Public tracked-object totals + real active satellites count from CelesTrak snapshot.
+    </p>
+    <div id="ora-tracked-objects" style="margin-top:0.5rem;">Loading tracked objects…</div>
+
+    <h3 style="margin-top:1rem;">Tracked Objects Breakdown</h3>
+    <div id="ora-tracked-chart" style="margin-top:0.5rem;">Loading chart…</div>
  
     <h2>Key documents (prototype)</h2>
     <div class="grid">
@@ -480,46 +488,68 @@ async function loadActiveLEO() {
 
 async function loadTrackedObjects() {
   const target = document.getElementById("ora-tracked-objects");
+  const chartTarget = document.getElementById("ora-tracked-chart");
   if (!target) return;
 
   target.textContent = "Loading tracked objects…";
+  if (chartTarget) chartTarget.textContent = "Loading chart…";
 
   try {
     const res = await fetch(ORA_API_BASE + "/ori/tracked-objects");
     if (!res.ok) {
-      target.textContent = "Unable to load tracked objects.";
+      target.textContent = `Unable to load tracked objects (HTTP ${res.status}).`;
       return;
     }
 
-    const data = await res.json();
+    const d = await res.json();
 
-    const total = data.tracked_objects_total > 0
-      ? data.tracked_objects_total.toLocaleString()
-      : "—";
-
-    const active = data.active_satellites.toLocaleString();
-
-    const inactive = data.inactive_or_debris_estimate > 0
-      ? data.inactive_or_debris_estimate.toLocaleString()
-      : "—";
+    const total = Number(d.tracked_objects_total || 0);
+    const onOrbit = Number(d.tracked_objects_on_orbit || 0);
+    const payloads = Number(d.payloads_on_orbit || 0);
+    const debris = Number(d.debris_on_orbit || 0);
+    const active = Number(d.active_satellites || 0);
+    const inactiveEst = Number(d.inactive_or_debris_estimate || 0);
 
     target.innerHTML = `
-      <div style="font-size:1.05rem;">
-        <strong>Total tracked objects:</strong> ${total}
+      <div style="font-size:1.05rem; color:#e5e7eb;">
+        <strong>Tracked objects (total):</strong> ${total.toLocaleString()}
       </div>
-      <div style="margin-top:0.3rem;">
-        <strong>Active satellites:</strong> ${active}
+      <div style="margin-top:0.35rem; color:#9ca3af; font-size:0.85rem;">
+        On-orbit: ${onOrbit.toLocaleString()} · Payloads: ${payloads.toLocaleString()} · Debris: ${debris.toLocaleString()}
       </div>
-      <div style="margin-top:0.3rem;">
-        <strong>Inactive / debris (est.):</strong> ${inactive}
+      <div style="margin-top:0.35rem; color:#9ca3af; font-size:0.85rem;">
+        Active satellites (real): ${active.toLocaleString()} · Inactive/debris est: ${inactiveEst.toLocaleString()}
       </div>
-      <div class="subtle-note" style="margin-top:0.5rem;">
-        Snapshot: ${data.snapshot_time_utc}
+      <div style="margin-top:0.35rem; color:#9ca3af; font-size:0.85rem;">
+        Snapshot: ${d.snapshot_time_utc} · Confidence: ${d.confidence_level} · Cadence: ${d.update_cadence}
       </div>
     `;
+
+    // Simple “hero” bar (no canvas libs required)
+    if (chartTarget) {
+      const base = onOrbit > 0 ? onOrbit : total;
+      const safeBase = base > 0 ? base : 1;
+
+      const pctActive = Math.min(100, (active / safeBase) * 100);
+      const pctInactive = Math.min(100, (inactiveEst / safeBase) * 100);
+
+      chartTarget.innerHTML = `
+        <div style="width:100%; max-width:720px;">
+          <div style="display:flex; height:18px; border-radius:10px; overflow:hidden; background:#111827;">
+            <div title="Active satellites" style="width:${pctActive}%; background:#22c55e;"></div>
+            <div title="Inactive/debris estimate" style="width:${pctInactive}%; background:#f59e0b;"></div>
+          </div>
+          <div style="margin-top:0.4rem; color:#9ca3af; font-size:0.85rem;">
+            Active share: ${pctActive.toFixed(1)}% · Inactive/debris share: ${pctInactive.toFixed(1)}% (baseline: ${base.toLocaleString()} on-orbit)
+          </div>
+        </div>
+      `;
+    }
+
   } catch (e) {
-    console.error(e);
-    target.textContent = "Unable to load tracked objects.";
+    console.error("loadTrackedObjects failed:", e);
+    target.textContent = "Unable to load tracked objects (see console).";
+    if (chartTarget) chartTarget.textContent = "";
   }
 }
 

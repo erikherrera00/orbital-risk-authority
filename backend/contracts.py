@@ -69,20 +69,19 @@ class TrackedObjectsSummary(BaseModel):
     data_source: str
     snapshot_time_utc: str
 
-    # SATCAT boxscore totals (real once update_tracked_totals.py runs)
     tracked_objects_total: int
     tracked_objects_on_orbit: int
     payloads_on_orbit: int
     debris_on_orbit: int
 
-    # CelesTrak active catalog (real)
     active_satellites: int
-
-    # Simple derived estimate (optional but useful for narrative)
     inactive_or_debris_estimate: int
 
-    # Optional notes (keep flexible)
-    notes: str | None = None
+    confidence_level: str
+    source_class: str
+    update_cadence: str
+
+    notes: Optional[str] = None
 
 
 class ActiveRegimesHistoryPoint(BaseModel):
