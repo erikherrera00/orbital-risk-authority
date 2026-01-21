@@ -47,26 +47,22 @@ app = FastAPI(
     version="0.6.0",
 )
 
-CORS_ORIGINS = [
-    # GitHub Pages (production)
+ALLOWED_ORIGINS = [
     "https://erikherrera00.github.io",
     "https://erikherrera00.github.io/orbital-risk-authority",
-
-    # Local frontend dev
-    "http://localhost:8080",
     "http://127.0.0.1:8080",
-    "http://localhost:5500",
+    "http://localhost:8080",
     "http://127.0.0.1:5500",
+    "http://localhost:5500",
 ]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=CORS_ORIGINS,
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=False,
-    allow_methods=["GET", "OPTIONS"],
+    allow_methods=["*"],   # IMPORTANT: includes OPTIONS
     allow_headers=["*"],
 )
-
 
 # Approximate tracked object counts per band (prototype values, to be refined)
 BAND_OBJECT_COUNTS = {
