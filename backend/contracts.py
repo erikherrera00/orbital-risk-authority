@@ -69,17 +69,17 @@ class TrackedObjectsSummary(BaseModel):
     data_source: str
     snapshot_time_utc: str
 
+    # Totals (SATCAT boxscore)
     tracked_objects_total: int
     tracked_objects_on_orbit: int
     payloads_on_orbit: int
     debris_on_orbit: int
 
+    # Active satellites (your real computed count)
     active_satellites: int
-    inactive_or_debris_estimate: int
 
-    confidence_level: str
-    source_class: str
-    update_cadence: str
+    # Derived
+    inactive_or_debris_estimate: int  # max(0, tracked_objects_on_orbit - active_satellites)
 
     notes: Optional[str] = None
 

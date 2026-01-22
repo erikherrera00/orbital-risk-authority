@@ -1033,19 +1033,16 @@ def get_tracked_objects():
 
     base = json.loads(TRACKED_TOTAL_PATH.read_text(encoding="utf-8"))
 
-    # REAL: active satellites from cached active catalog
-    active = catalog.load_active_catalog_cached()
-    active_count = len(active)
+    # REAL: active satellites from cached CelesTrak active catalog
+    active_count = len(catalog.load_active_catalog_cached())
 
     tracked_total = int(base.get("tracked_objects_total", 0) or 0)
     on_orbit = int(base.get("tracked_objects_on_orbit", 0) or 0)
     payloads = int(base.get("payloads_on_orbit", 0) or 0)
     debris = int(base.get("debris_on_orbit", 0) or 0)
 
-    # Prefer on_orbit if available; otherwise fall back to total.
-    baseline = on_orbit if on_orbit > 0 else tracked_total
-
-    inactive_est = max(0, baseline - active_count) if baseline > 0 else 0
+    # Prefer "on orbit" for the estimate (more meaningful than "total ever tracked")
+    inactive_est = max(0, on_orbit - active_count) if on_orbit > 0 else 0
 
     return TrackedObjectsSummary(
         data_source=str(base.get("data_source", "Tracked object totals snapshot")),
@@ -1059,11 +1056,7 @@ def get_tracked_objects():
         active_satellites=active_count,
         inactive_or_debris_estimate=inactive_est,
 
-        confidence_level="medium",
-        source_class="authoritative-public",
-        update_cadence="manual-daily",
-
-        notes=str(base.get("notes", "")) or None,
+        notes=(str(base.get("notes", "")).strip() or None),
     )
 
 
