@@ -213,6 +213,13 @@
       <strong>Orbital Risk Index (ORI)</strong> framework and validating how it can support
       regulators, insurers, and operators.
     </p>
+    <h2 id="operator-watchlist">Operator Watchlist</h2>
+    <p style="color:#9ca3af; font-size:0.9rem;">
+      Curated list for monitoring large-scale orbital population dynamics. Informational and non-predictive.
+    </p>
+    <div id="ora-watchlist" style="margin-top:0.75rem; font-size:0.95rem;">
+      Loading operator watchlist…
+    </div>
 
     <h2>Live prototype: Global ORI snapshot</h2>
     <p style="color:#9ca3af; font-size:0.9rem;">
@@ -236,14 +243,6 @@
     <div id="ori-operators" style="margin-top:0.75rem; font-size:0.95rem;">
       Loading operator fleet pressure…
     </div>
-    <h2>Operator Compliance Cards (Prototype)</h2>
-    <p style="color:#9ca3af; font-size:0.9rem;">
-      Prototype compliance/risk cards generated from ORA watchlist + framework indices (not predictive).
-    </p>
-    <div id="ora-operator-cards" style="margin-top:0.5rem; font-size:0.95rem;">
-      Loading operator cards…
-    </div>
-
     <h2>Live prototype: LEO Sub-Band Congestion</h2>
     <p style="color:#9ca3af; font-size:0.9rem;">
       Values below are derived from a CelesTrak active-satellites snapshot and represent
@@ -269,24 +268,6 @@
     <div id="ora-active-leo" style="margin-top:0.5rem; font-size:0.95rem;">
       Loading active LEO snapshot…
     </div>
-    <h2>Tracked Objects (SATCAT)</h2>
-    <p style="color:#9ca3af; font-size:0.9rem;">
-      Aggregated tracked-object totals derived from CelesTrak SATCAT boxscore (snapshot-based).
-    </p>
-    <div id="ora-tracked-objects" style="margin-top:0.5rem;">Loading tracked objects…</div>
-
-
-    <h2>Tracked Object Totals (Prototype)</h2>
-    <div id="ora-tracked" style="margin-top:0.5rem;">Loading tracked totals…</div>
-    <h2>Tracked Objects (v1.1)</h2>
-    <p style="color:#9ca3af; font-size:0.9rem;">
-      Public tracked-object totals + real active satellites count from CelesTrak snapshot.
-    </p>
-    <div id="ora-tracked-objects" style="margin-top:0.5rem;">Loading tracked objects…</div>
-
-    <h3 style="margin-top:1rem;">Tracked Objects Breakdown</h3>
-    <div id="ora-tracked-chart" style="margin-top:0.5rem;">Loading chart…</div>
- 
     <h2>Key documents (prototype)</h2>
     <div class="grid">
       <div class="card">
@@ -354,6 +335,17 @@
     clearTimeout(id);
   }
 }
+
+
+function escapeHtml(s) {
+  return s
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
 
 async function loadGlobalRiskSummary() {
   const target = document.getElementById("ori-global-summary");
@@ -435,134 +427,6 @@ async function loadGlobalRiskSummary() {
   } catch (e) {
     console.error("loadGlobalRiskSummary failed:", e);
     target.textContent = "Unable to load global ORI snapshot (see console).";
-  }
-}
-
-
-async function loadActiveLEO() {
-  const target = document.getElementById("ora-active-leo");
-  if (!target) return;
-
-  target.textContent = "Loading active LEO snapshot…";
-
-  try {
-    const res = await fetch(ORA_API_BASE + "/ori/active-leo");
-    if (!res.ok) {
-      target.textContent = `Unable to load active LEO snapshot (HTTP ${res.status}).`;
-      return;
-    }
-
-    const data = await res.json();
-
-    const count =
-      data.leo_active_count ??
-      data.leo_active ??
-      data.count ??
-      null;
-
-    const snap =
-      data.snapshot_time_utc ??
-      data.snapshot ??
-      "unknown";
-
-    if (count === null) {
-      target.textContent = "Active LEO snapshot returned no count.";
-      console.warn("active-leo payload:", data);
-      return;
-    }
-
-    target.innerHTML = `
-      <div style="font-size:1.05rem; color:#e5e7eb;">
-        <strong>Active LEO satellites:</strong> ${Number(count).toLocaleString()}
-      </div>
-      <div style="margin-top:0.35rem; color:#9ca3af; font-size:0.85rem;">
-        Snapshot: ${snap} · Source: CelesTrak active catalog
-      </div>
-    `;
-  } catch (e) {
-    console.error("loadActiveLEO failed:", e);
-    target.textContent = "Unable to load active LEO snapshot (see console).";
-  }
-}
-
-
-async function loadTrackedObjects() {
-  const target = document.getElementById("ora-tracked-objects");
-  if (!target) return;
-
-  target.textContent = "Loading tracked object totals…";
-
-  try {
-    const res = await fetch(ORA_API_BASE + "/ori/tracked-objects");
-    if (!res.ok) {
-      target.textContent = `Unable to load tracked objects (HTTP ${res.status}).`;
-      return;
-    }
-
-    const d = await res.json();
-
-    const total = Number(d.tracked_objects_total || 0).toLocaleString();
-    const onOrbit = Number(d.tracked_objects_on_orbit || 0).toLocaleString();
-    const payloads = Number(d.payloads_on_orbit || 0).toLocaleString();
-    const debris = Number(d.debris_on_orbit || 0).toLocaleString();
-    const active = Number(d.active_satellites || 0).toLocaleString();
-    const inactive = Number(d.inactive_or_debris_estimate || 0).toLocaleString();
-
-    target.innerHTML = `
-      <div style="font-size:1.05rem; color:#e5e7eb;">
-        <strong>Tracked objects (total):</strong> ${total}
-      </div>
-      <div style="margin-top:0.25rem; color:#e5e7eb;">
-        <strong>On orbit:</strong> ${onOrbit}
-        <span style="color:#9ca3af;"> · Payloads:</span> ${payloads}
-        <span style="color:#9ca3af;"> · Debris:</span> ${debris}
-      </div>
-      <div style="margin-top:0.25rem; color:#e5e7eb;">
-        <strong>Active satellites (real):</strong> ${active}
-        <span style="color:#9ca3af;"> · Non-active estimate:</span> ${inactive}
-      </div>
-      <div style="margin-top:0.35rem; color:#9ca3af; font-size:0.85rem;">
-        Snapshot: ${d.snapshot_time_utc || "unknown"} · Source: ${d.data_source || "unknown"}
-      </div>
-      ${d.notes ? `<div style="margin-top:0.35rem; color:#9ca3af; font-size:0.85rem;">${d.notes}</div>` : ""}
-    `;
-  } catch (e) {
-    console.error("loadTrackedObjects failed:", e);
-    target.textContent = "Unable to load tracked objects (see console).";
-  }
-}
-
-
-
-async function loadTrackedTotals() {
-  const target = document.getElementById("ora-tracked");
-  if (!target) return;
-
-  target.textContent = "Loading tracked totals…";
-
-  try {
-    const res = await fetch(ORA_API_BASE + "/ori/tracked-objects");
-    if (!res.ok) {
-      target.textContent = "Unable to load tracked totals.";
-      return;
-    }
-    const d = await res.json();
-
-    target.innerHTML = `
-      <div style="font-size:1.05rem; color:#e5e7eb;">
-        <strong>Total tracked objects:</strong> ${Number(d.tracked_total).toLocaleString()}
-      </div>
-      <div style="margin-top:0.35rem; color:#9ca3af; font-size:0.85rem;">
-        Active: ${Number(d.active_total).toLocaleString()} · Inactive: ${Number(d.inactive_total).toLocaleString()}
-        <br>Snapshot: ${d.snapshot_time_utc}
-      </div>
-      <div style="margin-top:0.35rem; color:#9ca3af; font-size:0.85rem;">
-        Source: ${d.data_source}
-      </div>
-    `;
-  } catch (e) {
-    console.error(e);
-    target.textContent = "Unable to load tracked totals.";
   }
 }
 
@@ -679,66 +543,56 @@ async function loadLEOZoneDeltas() {
 }
 
 
-async function loadOperatorCards() {
-  const target = document.getElementById("ora-operator-cards");
-  if (!target) return;
+async function loadActiveLEO() {
+  const target = document.getElementById("ora-active-leo");
+  if (!target) {
+    console.error("Missing element: #ora-active-leo");
+    return;
+  }
 
-  target.textContent = "Loading operator compliance cards…";
+  // Always show something immediately
+  target.textContent = "Loading active LEO snapshot…";
 
   try {
-    const res = await fetch(ORA_API_BASE + "/ori/operators/cards");
+    const res = await fetch(ORA_API_BASE + "/ori/active-leo");
     if (!res.ok) {
-      target.textContent = `Unable to load operator cards (HTTP ${res.status}).`;
+      target.textContent = `Unable to load active LEO snapshot (HTTP ${res.status}).`;
       return;
     }
 
-    const payload = await res.json();
+    const data = await res.json();
 
-    const cards =
-      payload.operators ||
-      payload.cards ||
-      payload.data ||
-      [];
+    const rawCount =
+      data.leo_active_count ??
+      data.active_leo_count ??
+      data.count ??
+      null;
 
-    if (!Array.isArray(cards) || cards.length === 0) {
-      target.textContent = "No operators found in watchlist.";
-      console.warn("Operator cards payload:", payload);
+    const snapshot =
+      data.snapshot_time_utc ??
+      data.snapshot ??
+      "unknown";
+
+    if (rawCount === null) {
+      target.textContent = "Active LEO loaded but count field not found.";
+      console.warn("active-leo payload:", data);
       return;
     }
 
-    let html = `<table style="width:100%; border-collapse:collapse; margin-top:0.5rem; font-size:0.9rem;">
-      <thead><tr>
-        <th style="text-align:left; padding:0.4rem 0;">Operator</th>
-        <th style="text-align:left; padding:0.4rem 0;">Orbit</th>
-        <th style="text-align:left; padding:0.4rem 0;">Fleet</th>
-        <th style="text-align:left; padding:0.4rem 0;">FPI</th>
-        <th style="text-align:left; padding:0.4rem 0;">Risk</th>
-        <th style="text-align:left; padding:0.4rem 0;">Notes</th>
-      </tr></thead><tbody>`;
+    const countNum = Number(rawCount);
+    const countText = Number.isFinite(countNum) ? countNum.toLocaleString() : String(rawCount);
 
-    for (const c of cards) {
-      const name = c.operator_name ?? c.name ?? "—";
-      const orbit = c.primary_orbit ?? c.orbit_band ?? "—";
-      const fleet = Number(c.fleet_size ?? 0);
-      const fpi = Number(c.fleet_pressure_index ?? c.fpi ?? 0);
-      const risk = c.risk_level ?? "—";
-      const notes = c.notes ?? "";
-
-      html += `<tr>
-        <td style="padding:0.3rem 0;">${name}</td>
-        <td style="padding:0.3rem 0;">${orbit}</td>
-        <td style="padding:0.3rem 0;">${fleet.toLocaleString()}</td>
-        <td style="padding:0.3rem 0;">${fpi.toFixed(1)}</td>
-        <td style="padding:0.3rem 0;">${risk}</td>
-        <td style="padding:0.3rem 0;">${notes}</td>
-      </tr>`;
-    }
-
-    html += `</tbody></table>`;
-    target.innerHTML = html;
-  } catch (e) {
-    console.error("loadOperatorCards failed:", e);
-    target.textContent = "Unable to load operator cards (see console).";
+    target.innerHTML = `
+      <div style="font-size:1.05rem; color:#e5e7eb;">
+        <strong>Active LEO satellites:</strong> ${countText}
+      </div>
+      <div style="margin-top:0.35rem; color:#9ca3af; font-size:0.85rem;">
+        Snapshot: ${snapshot} · Source: CelesTrak active catalog
+      </div>
+    `;
+  } catch (err) {
+    console.error("loadActiveLEO failed:", err);
+    target.textContent = "Unable to load active LEO snapshot (see console).";
   }
 }
 
@@ -778,6 +632,69 @@ async function loadBrief() {
   } catch (e) {
     console.error("loadBrief failed:", e);
     target.textContent = "Brief unavailable.";
+  }
+}
+
+
+async function loadOperatorWatchlist() {
+  const target = document.getElementById("ora-watchlist");
+  if (!target) return;
+
+  target.textContent = "Loading operator watchlist…";
+
+  try {
+    const res = await fetch(ORA_API_BASE + "/ori/operators/watchlist");
+    if (!res.ok) {
+      target.textContent = `Unable to load watchlist (HTTP ${res.status}).`;
+      return;
+    }
+
+    const payload = await res.json();
+    const updated = payload.updated_utc ?? "unknown";
+    const ops = Array.isArray(payload.operators) ? payload.operators : [];
+
+    if (ops.length === 0) {
+      target.innerHTML = `<div style="color:#9ca3af;">No operators in watchlist yet. (updated: ${updated})</div>`;
+      return;
+    }
+
+    let html = `
+      <div style="margin:0.25rem 0 0.75rem 0; color:#9ca3af; font-size:0.85rem;">
+        Updated: ${updated} · <a href="${ORA_API_BASE}/ori/operators/watchlist" target="_blank" rel="noopener">API</a>
+      </div>
+      <table style="width:100%; border-collapse:collapse; margin-top:0.25rem; font-size:0.9rem;">
+        <thead>
+          <tr>
+            <th style="text-align:left; padding:0.4rem 0;">Operator</th>
+            <th style="text-align:left; padding:0.4rem 0;">Band</th>
+            <th style="text-align:left; padding:0.4rem 0;">Type</th>
+            <th style="text-align:left; padding:0.4rem 0;">Notes</th>
+          </tr>
+        </thead>
+        <tbody>
+    `;
+
+    for (const o of ops) {
+      const name = o.operator_name ?? o.operator ?? "—";
+      const band = o.orbit_band ?? "—";
+      const typ = o.constellation_type ?? o.type ?? "—";
+      const notes = o.notes ?? "";
+
+      html += `
+        <tr>
+          <td style="padding:0.35rem 0; vertical-align:top;">${escapeHtml(String(name))}</td>
+          <td style="padding:0.35rem 0; vertical-align:top;">${escapeHtml(String(band))}</td>
+          <td style="padding:0.35rem 0; vertical-align:top;">${escapeHtml(String(typ))}</td>
+          <td style="padding:0.35rem 0; vertical-align:top; color:#d1d5db;">${escapeHtml(String(notes))}</td>
+        </tr>
+      `;
+    }
+
+    html += `</tbody></table>`;
+    target.innerHTML = html;
+  } catch (e) {
+    console.error("loadOperatorWatchlist failed:", e);
+    target.textContent = "Unable to load operator watchlist (see console).";
   }
 }
 
@@ -930,9 +847,7 @@ document.addEventListener("DOMContentLoaded", () => {
   try { loadLEOZones(); } catch (e) { console.error(e); }
   try { loadBrief(); } catch (e) { console.error(e); }
   try { loadLEOZoneDeltas(); } catch (e) { console.error(e); }
-  try { loadOperatorCards(); } catch (e) { console.error(e); }
-  try { loadTrackedObjects(); } catch (e) { console.error(e); }
-  try { loadTrackedTotals(); } catch (e) { console.error(e); }
+  try { loadOperatorWatchlist(); } catch (e) { console.error(e); }
   try { loadVersion(); } catch (e) { console.error(e); }
 });
 

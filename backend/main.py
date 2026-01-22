@@ -1,25 +1,18 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
-from fastapi.responses import RedirectResponse
-from typing import List, Optional
-import catalog
-import traceback
-from fastapi import Request
-from fastapi.responses import JSONResponse
-from fastapi import HTTPException
-import json
-from pathlib import Path
-from fastapi.middleware.cors import CORSMiddleware
-import os
-from contracts import TrackedObjectsSummary
-from fastapi import Query
-from contracts import ActiveRegimesHistory, ActiveRegimesHistoryPoint
+from fastapi.responses import JSONResponse, RedirectResponse
 from datetime import datetime
-from typing import Any
-from operators import load_watchlist
+from pathlib import Path
+from pydantic import BaseModel
+from typing import Any, List, Optional
+import json
+import os
+import traceback
 
-from contracts import (
+from backend import catalog
+from backend import operators
+
+from backend.contracts import (
     VersionInfo,
     OrbitBandSummary,
     GlobalRiskSummary,
@@ -38,6 +31,11 @@ from contracts import (
     OperatorCard,
     OperatorCardsResponse,
     OperatorDetailCard,
+    TrackedObjectsDeltasResponse,
+    TrackedObjectsDelta,
+    TrackedObjectsSummary,
+    ActiveRegimesHistory,
+    ActiveRegimesHistoryPoint,
 )
 
 
@@ -47,6 +45,7 @@ app = FastAPI(
     version="0.6.0",
 )
 
+<<<<<<< Updated upstream
 ALLOWED_ORIGINS = [
     "https://erikherrera00.github.io",
     "https://erikherrera00.github.io/orbital-risk-authority",
@@ -54,15 +53,34 @@ ALLOWED_ORIGINS = [
     "http://localhost:8080",
     "http://127.0.0.1:5500",
     "http://localhost:5500",
+=======
+
+allowed_origins = [
+    "https://erikherrera00.github.io",
+    "http://127.0.0.1:8080",
+    "http://localhost:8080",
+>>>>>>> Stashed changes
 ]
+
+# Optional: allow overriding via env var (Render can set this)
+extra = os.getenv("ORA_CORS_EXTRA_ORIGINS", "").strip()
+if extra:
+    allowed_origins.extend([o.strip() for o in extra.split(",") if o.strip()])
 
 app.add_middleware(
     CORSMiddleware,
+<<<<<<< Updated upstream
     allow_origins=ALLOWED_ORIGINS,
     allow_credentials=False,
     allow_methods=["*"],   # IMPORTANT: includes OPTIONS
+=======
+    allow_origins=allowed_origins,
+    allow_credentials=False,
+    allow_methods=["GET", "OPTIONS"],
+>>>>>>> Stashed changes
     allow_headers=["*"],
 )
+
 
 # Approximate tracked object counts per band (prototype values, to be refined)
 BAND_OBJECT_COUNTS = {
@@ -166,7 +184,7 @@ def _risk_level_from_fpi(fpi: float) -> str:
 
 @app.get("/ori/operators/{operator_slug}/card", response_model=OperatorDetailCard, tags=["operators"])
 def get_operator_card(operator_slug: str):
-    wl = load_watchlist()
+    wl = operators.load_watchlist()
     entries = wl.get("operators", []) or []
 
     # find by slug (case-insensitive)
@@ -321,6 +339,15 @@ def debug_history_files():
     return {"count": len(files), "files": out}
 
 
+WATCHLIST_PATH = Path(__file__).parent / "data" / "operators_watchlist.json"
+
+@app.get("/ori/operators/watchlist", tags=["ori"])
+def operators_watchlist():
+    if not WATCHLIST_PATH.exists():
+        raise HTTPException(status_code=404, detail="Watchlist not found.")
+    return json.loads(WATCHLIST_PATH.read_text(encoding="utf-8"))
+
+
 @app.exception_handler(Exception)
 async def unhandled_exception_handler(request: Request, exc: Exception):
     traceback.print_exc()
@@ -461,22 +488,32 @@ def get_active_regimes_delta():
 
 @app.get("/ori/all-regimes", response_model=TotalRegimes, tags=["ori"])
 def ori_all_regimes():
-    # Dummy placeholder to lock routing + contract first
+    """
+    v1: Active-regime totals from cached CelesTrak ACTIVE catalog.
+    NOTE: This is not "all tracked objects" yet — it's active satellites only.
+    """
     snapshot_time = catalog.get_snapshot_timestamp_iso()
+
+    # REAL: active satellites snapshot
+    objects = catalog.load_active_catalog_cached()
+    regime_counts = catalog.count_active_regimes(objects)
+
     return TotalRegimes(
-        data_source="Placeholder (wiring in total objects next)",
+        data_source="CelesTrak ACTIVE satellites snapshot (regimes derived from catalog rules)",
         snapshot_time_utc=snapshot_time,
-        leo_total=0,
-        meo_total=0,
-        geo_total=0,
+        leo_total=int(regime_counts.get("LEO", 0)),
+        meo_total=int(regime_counts.get("MEO", 0)),
+        geo_total=int(regime_counts.get("GEO", 0)),
+        notes="v1: totals are ACTIVE satellites only (not all tracked objects).",
     )
+
 
 @app.get("/ori/operators/watchlist", tags=["operators"])
 def get_operators_watchlist():
     """
     Returns the ORA operator watchlist data source (static JSON file).
     """
-    return load_watchlist()
+    return operators.load_watchlist()
 
 
 HISTORY_DIR = Path(__file__).parent / "data" / "history"
@@ -508,7 +545,7 @@ def get_operator_cards():
     Returns operator 'cards' derived from the watchlist:
     explainable posture + flags for quick evaluation.
     """
-    wl = load_watchlist()
+    wl = operators.load_watchlist()
     ops = wl.get("operators", []) if isinstance(wl, dict) else []
 
     cards = []
@@ -773,6 +810,71 @@ class OraVersion(BaseModel):
     prototype_stage: str
 
 
+def _get_tracked_objects_from_snapshot(s: dict) -> dict:
+    # Normalize + safe defaults
+    t = s.get("tracked_objects") or {}
+    return {
+        "tracked_objects_total": int(t.get("tracked_objects_total", 0) or 0),
+        "tracked_objects_on_orbit": int(t.get("tracked_objects_on_orbit", 0) or 0),
+        "payloads_on_orbit": int(t.get("payloads_on_orbit", 0) or 0),
+        "debris_on_orbit": int(t.get("debris_on_orbit", 0) or 0),
+    }
+
+
+@app.get("/ori/deltas/tracked-objects", response_model=TrackedObjectsDeltasResponse, tags=["ori"])
+def get_tracked_objects_deltas():
+    snapshots = _load_history_files()
+    if not snapshots or len(snapshots) < 1:
+        return TrackedObjectsDeltasResponse(
+            data_source="ORA history snapshots (backend/data/history/*.json)",
+            latest_snapshot_time_utc="unknown",
+            latest=TrackedObjectsDelta(
+                tracked_objects_total=0,
+                tracked_objects_on_orbit=0,
+                payloads_on_orbit=0,
+                debris_on_orbit=0,
+            ),
+            notes="No history snapshots available yet.",
+        )
+
+    latest_snap = snapshots[-1]
+    prev_snap = snapshots[-2] if len(snapshots) >= 2 else None
+
+    latest_vals = _get_tracked_objects_from_snapshot(latest_snap)
+    latest_model = TrackedObjectsDelta(**latest_vals)
+
+    if not prev_snap:
+        return TrackedObjectsDeltasResponse(
+            data_source="ORA history snapshots (backend/data/history/*.json)",
+            latest_snapshot_time_utc=str(latest_snap.get("snapshot_time_utc", "unknown")),
+            previous_snapshot_time_utc=None,
+            latest=latest_model,
+            previous=None,
+            delta=None,
+            notes="Only one history snapshot exists; deltas unavailable.",
+        )
+
+    prev_vals = _get_tracked_objects_from_snapshot(prev_snap)
+    prev_model = TrackedObjectsDelta(**prev_vals)
+
+    delta_model = TrackedObjectsDelta(
+        tracked_objects_total=latest_vals["tracked_objects_total"] - prev_vals["tracked_objects_total"],
+        tracked_objects_on_orbit=latest_vals["tracked_objects_on_orbit"] - prev_vals["tracked_objects_on_orbit"],
+        payloads_on_orbit=latest_vals["payloads_on_orbit"] - prev_vals["payloads_on_orbit"],
+        debris_on_orbit=latest_vals["debris_on_orbit"] - prev_vals["debris_on_orbit"],
+    )
+
+    return TrackedObjectsDeltasResponse(
+        data_source="ORA history snapshots (backend/data/history/*.json)",
+        latest_snapshot_time_utc=str(latest_snap.get("snapshot_time_utc", "unknown")),
+        previous_snapshot_time_utc=str(prev_snap.get("snapshot_time_utc", "unknown")),
+        latest=latest_model,
+        previous=prev_model,
+        delta=delta_model,
+        notes="Deltas computed as latest - previous snapshot.",
+    )
+
+
 @app.get("/ori/active-regimes", response_model=ActiveRegimes, tags=["ori"])
 def get_active_regimes():
     objects = catalog.load_active_catalog_cached()
@@ -889,6 +991,29 @@ def get_operator_risk():
             notes="Primarily GEO assets with standard graveyard orbit disposal practices.",
         ),
     ]
+
+
+@app.get("/ori/operators/watchlist", tags=["ori"])
+def get_operator_watchlist():
+    """
+    Curated operator watchlist (informational, non-predictive).
+    Sourced from a local JSON file to keep the prototype stable and auditable.
+    """
+    if not WATCHLIST_PATH.exists():
+        raise HTTPException(status_code=404, detail="Watchlist not found. Expected backend/data/operators_watchlist.json")
+
+    try:
+        payload = json.loads(WATCHLIST_PATH.read_text(encoding="utf-8"))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Watchlist JSON invalid: {type(e).__name__}: {e}")
+
+    # Minimal contract hardening (prevents homepage breakage)
+    payload.setdefault("updated_utc", "unknown")
+    payload.setdefault("operators", [])
+    if not isinstance(payload["operators"], list):
+        raise HTTPException(status_code=500, detail="Watchlist format error: 'operators' must be a list")
+
+    return payload
 
 
 @app.get("/version", response_model=OraVersion)

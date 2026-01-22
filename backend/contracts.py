@@ -63,6 +63,7 @@ class TotalRegimes(BaseModel):
     leo_total: int
     meo_total: int
     geo_total: int
+    notes: Optional[str] = None
 
 
 class TrackedObjectsSummary(BaseModel):
@@ -232,6 +233,21 @@ class LEOZonesHistory(BaseModel):
     points: List[LEOZonesHistoryPoint]
     notes: Optional[str] = None
 
+
+class TrackedObjectsDelta(BaseModel):
+    tracked_objects_total: int
+    tracked_objects_on_orbit: int
+    payloads_on_orbit: int
+    debris_on_orbit: int
+
+class TrackedObjectsDeltasResponse(BaseModel):
+    data_source: str
+    latest_snapshot_time_utc: str
+    previous_snapshot_time_utc: Optional[str] = None
+    latest: TrackedObjectsDelta
+    previous: Optional[TrackedObjectsDelta] = None
+    delta: Optional[TrackedObjectsDelta] = None
+    notes: Optional[str] = None
 
 # ---------------------------
 # Active LEO / Active Regimes (Real data)
