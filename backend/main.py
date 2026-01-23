@@ -1,3 +1,4 @@
+
 from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, RedirectResponse
@@ -11,6 +12,7 @@ import traceback
 
 from backend import catalog
 from backend import operators
+from backend.operators import load_watchlist
 
 from backend.contracts import (
     VersionInfo,
