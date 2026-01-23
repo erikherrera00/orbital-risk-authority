@@ -45,7 +45,7 @@ app = FastAPI(
     version="0.6.0",
 )
 
-<<<<<<< Updated upstream
+
 ALLOWED_ORIGINS = [
     "https://erikherrera00.github.io",
     "https://erikherrera00.github.io/orbital-risk-authority",
@@ -53,31 +53,20 @@ ALLOWED_ORIGINS = [
     "http://localhost:8080",
     "http://127.0.0.1:5500",
     "http://localhost:5500",
-=======
-
-allowed_origins = [
-    "https://erikherrera00.github.io",
-    "http://127.0.0.1:8080",
-    "http://localhost:8080",
->>>>>>> Stashed changes
 ]
 
-# Optional: allow overriding via env var (Render can set this)
+# Optional: allow extra origins via env var (Render-safe)
 extra = os.getenv("ORA_CORS_EXTRA_ORIGINS", "").strip()
 if extra:
-    allowed_origins.extend([o.strip() for o in extra.split(",") if o.strip()])
+    ALLOWED_ORIGINS.extend(
+        [o.strip() for o in extra.split(",") if o.strip()]
+    )
 
 app.add_middleware(
     CORSMiddleware,
-<<<<<<< Updated upstream
     allow_origins=ALLOWED_ORIGINS,
     allow_credentials=False,
-    allow_methods=["*"],   # IMPORTANT: includes OPTIONS
-=======
-    allow_origins=allowed_origins,
-    allow_credentials=False,
     allow_methods=["GET", "OPTIONS"],
->>>>>>> Stashed changes
     allow_headers=["*"],
 )
 
@@ -443,6 +432,76 @@ def ori_history_leo_zones(limit: int = 5, include_deltas: bool = True):
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"{type(e).__name__}: {e}")
+
+
+def _extract_tracked_block(s: dict) -> dict[str, int]:
+    """
+    Pull tracked totals out of a history snapshot.
+    Returns ints, defaulting to 0 if missing.
+    """
+    block = s.get("tracked_objects") or {}
+    if not isinstance(block, dict):
+        block = {}
+
+    def _i(key: str) -> int:
+        try:
+            return int(block.get(key, 0) or 0)
+        except Exception:
+            return 0
+
+    return {
+        "tracked_objects_total": _i("tracked_objects_total"),
+        "tracked_objects_on_orbit": _i("tracked_objects_on_orbit"),
+        "payloads_on_orbit": _i("payloads_on_orbit"),
+        "debris_on_orbit": _i("debris_on_orbit"),
+    }
+
+
+@app.get("/ori/deltas/tracked-objects", response_model=TrackedObjectsDeltasResponse, tags=["ori"])
+def ori_tracked_objects_deltas(limit: int = 2):
+    """
+    Deltas computed from history snapshots (latest vs previous).
+    """
+    snaps = _load_history_files()
+    if not snaps:
+        raise HTTPException(status_code=404, detail="No history snapshots found")
+
+    if limit < 2:
+        limit = 2
+
+    window = snaps[-limit:]
+    if len(window) < 2:
+        raise HTTPException(status_code=400, detail="Need at least 2 snapshots to compute deltas")
+
+    prev = window[-2]
+    curr = window[-1]
+
+    prev_t = str(prev.get("snapshot_time_utc", "unknown"))
+    curr_t = str(curr.get("snapshot_time_utc", "unknown"))
+
+    prev_vals = _extract_tracked_block(prev)
+    curr_vals = _extract_tracked_block(curr)
+
+    deltas: list[TrackedObjectsDelta] = []
+    for k in ["tracked_objects_total", "tracked_objects_on_orbit", "payloads_on_orbit", "debris_on_orbit"]:
+        p = int(prev_vals.get(k, 0))
+        c = int(curr_vals.get(k, 0))
+        deltas.append(
+            TrackedObjectsDelta(
+                field=k,
+                previous=p,
+                current=c,
+                delta=c - p,
+            )
+        )
+
+    return TrackedObjectsDeltasResponse(
+        data_source="ORA history snapshots (backend/data/history/*.json)",
+        snapshot_time_utc=curr_t,
+        previous_snapshot_time_utc=prev_t,
+        deltas=deltas,
+        notes="Deltas are computed from the latest two history snapshots in the requested window.",
+    )
 
 
 @app.get("/ori/deltas/active-regimes", response_model=ActiveRegimesDelta, tags=["ori"])
@@ -821,57 +880,35 @@ def _get_tracked_objects_from_snapshot(s: dict) -> dict:
     }
 
 
-@app.get("/ori/deltas/tracked-objects", response_model=TrackedObjectsDeltasResponse, tags=["ori"])
-def get_tracked_objects_deltas():
-    snapshots = _load_history_files()
-    if not snapshots or len(snapshots) < 1:
-        return TrackedObjectsDeltasResponse(
-            data_source="ORA history snapshots (backend/data/history/*.json)",
-            latest_snapshot_time_utc="unknown",
-            latest=TrackedObjectsDelta(
-                tracked_objects_total=0,
-                tracked_objects_on_orbit=0,
-                payloads_on_orbit=0,
-                debris_on_orbit=0,
-            ),
-            notes="No history snapshots available yet.",
-        )
+@app.get("/ori/tracked-objects", response_model=TrackedObjectsSummary, tags=["ori"])
+def get_tracked_objects():
+    if not TRACKED_TOTAL_PATH.exists():
+        raise HTTPException(status_code=404, detail="tracked_total.json not found")
 
-    latest_snap = snapshots[-1]
-    prev_snap = snapshots[-2] if len(snapshots) >= 2 else None
+    base = json.loads(TRACKED_TOTAL_PATH.read_text(encoding="utf-8"))
 
-    latest_vals = _get_tracked_objects_from_snapshot(latest_snap)
-    latest_model = TrackedObjectsDelta(**latest_vals)
+    active = catalog.load_active_catalog_cached()
+    active_count = len(active)
 
-    if not prev_snap:
-        return TrackedObjectsDeltasResponse(
-            data_source="ORA history snapshots (backend/data/history/*.json)",
-            latest_snapshot_time_utc=str(latest_snap.get("snapshot_time_utc", "unknown")),
-            previous_snapshot_time_utc=None,
-            latest=latest_model,
-            previous=None,
-            delta=None,
-            notes="Only one history snapshot exists; deltas unavailable.",
-        )
+    tracked_total = int(base.get("tracked_objects_total", 0) or 0)
+    tracked_on_orbit = int(base.get("tracked_objects_on_orbit", 0) or 0)
+    payloads_on_orbit = int(base.get("payloads_on_orbit", 0) or 0)
+    debris_on_orbit = int(base.get("debris_on_orbit", 0) or 0)
 
-    prev_vals = _get_tracked_objects_from_snapshot(prev_snap)
-    prev_model = TrackedObjectsDelta(**prev_vals)
+    # If we have "on orbit", use it for inactive estimate; otherwise fall back to total
+    reference_total = tracked_on_orbit if tracked_on_orbit > 0 else tracked_total
+    inactive_est = max(0, reference_total - active_count) if reference_total > 0 else 0
 
-    delta_model = TrackedObjectsDelta(
-        tracked_objects_total=latest_vals["tracked_objects_total"] - prev_vals["tracked_objects_total"],
-        tracked_objects_on_orbit=latest_vals["tracked_objects_on_orbit"] - prev_vals["tracked_objects_on_orbit"],
-        payloads_on_orbit=latest_vals["payloads_on_orbit"] - prev_vals["payloads_on_orbit"],
-        debris_on_orbit=latest_vals["debris_on_orbit"] - prev_vals["debris_on_orbit"],
-    )
-
-    return TrackedObjectsDeltasResponse(
-        data_source="ORA history snapshots (backend/data/history/*.json)",
-        latest_snapshot_time_utc=str(latest_snap.get("snapshot_time_utc", "unknown")),
-        previous_snapshot_time_utc=str(prev_snap.get("snapshot_time_utc", "unknown")),
-        latest=latest_model,
-        previous=prev_model,
-        delta=delta_model,
-        notes="Deltas computed as latest - previous snapshot.",
+    return TrackedObjectsSummary(
+        data_source=str(base.get("data_source", "Tracked object totals snapshot")),
+        snapshot_time_utc=str(base.get("snapshot_time_utc", "unknown")),
+        tracked_objects_total=tracked_total,
+        tracked_objects_on_orbit=tracked_on_orbit,
+        payloads_on_orbit=payloads_on_orbit,
+        debris_on_orbit=debris_on_orbit,
+        active_satellites=active_count,
+        inactive_or_debris_estimate=inactive_est,
+        notes=str(base.get("notes", "")) or None,
     )
 
 
@@ -1161,27 +1198,29 @@ def get_tracked_objects():
     # REAL: active satellites from cached CelesTrak active catalog
     active_count = len(catalog.load_active_catalog_cached())
 
+    # SATCAT totals
     tracked_total = int(base.get("tracked_objects_total", 0) or 0)
-    on_orbit = int(base.get("tracked_objects_on_orbit", 0) or 0)
-    payloads = int(base.get("payloads_on_orbit", 0) or 0)
-    debris = int(base.get("debris_on_orbit", 0) or 0)
 
-    # Prefer "on orbit" for the estimate (more meaningful than "total ever tracked")
-    inactive_est = max(0, on_orbit - active_count) if on_orbit > 0 else 0
+    # SATCAT on-orbit fields (preferred for “inactive/debris estimate”)
+    on_orbit = base.get("tracked_objects_on_orbit", None)
+    payloads_on_orbit = base.get("payloads_on_orbit", None)
+    debris_on_orbit = base.get("debris_on_orbit", None)
+
+    tracked_on_orbit = int(on_orbit) if on_orbit is not None else 0
+
+    # ✅ Use ON-ORBIT minus ACTIVE (this is the meaningful comparison)
+    inactive_est = max(0, tracked_on_orbit - active_count) if tracked_on_orbit > 0 else 0
 
     return TrackedObjectsSummary(
-        data_source=str(base.get("data_source", "Tracked object totals snapshot")),
+        data_source=str(base.get("data_source", "CelesTrak SATCAT Boxscore (All sources aggregate)")),
         snapshot_time_utc=str(base.get("snapshot_time_utc", "unknown")),
-
         tracked_objects_total=tracked_total,
-        tracked_objects_on_orbit=on_orbit,
-        payloads_on_orbit=payloads,
-        debris_on_orbit=debris,
-
+        tracked_objects_on_orbit=(tracked_on_orbit if tracked_on_orbit > 0 else None),
+        payloads_on_orbit=(int(payloads_on_orbit) if payloads_on_orbit is not None else None),
+        debris_on_orbit=(int(debris_on_orbit) if debris_on_orbit is not None else None),
         active_satellites=active_count,
         inactive_or_debris_estimate=inactive_est,
-
-        notes=(str(base.get("notes", "")).strip() or None),
+        notes=str(base.get("notes", "")) or None,
     )
 
 

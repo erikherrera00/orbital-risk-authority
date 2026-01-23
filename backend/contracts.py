@@ -70,19 +70,21 @@ class TrackedObjectsSummary(BaseModel):
     data_source: str
     snapshot_time_utc: str
 
-    # Totals (SATCAT boxscore)
+    # SATCAT totals (often includes decayed + on-orbit + etc)
     tracked_objects_total: int
-    tracked_objects_on_orbit: int
-    payloads_on_orbit: int
-    debris_on_orbit: int
 
-    # Active satellites (your real computed count)
+    # SATCAT on-orbit breakdown (what we actually compare against active satellites)
+    tracked_objects_on_orbit: int | None = None
+    payloads_on_orbit: int | None = None
+    debris_on_orbit: int | None = None
+
+    # Real snapshot-derived
     active_satellites: int
 
-    # Derived
-    inactive_or_debris_estimate: int  # max(0, tracked_objects_on_orbit - active_satellites)
+    # Derived (best-effort)
+    inactive_or_debris_estimate: int
 
-    notes: Optional[str] = None
+    notes: str | None = None
 
 
 class ActiveRegimesHistoryPoint(BaseModel):
@@ -235,19 +237,18 @@ class LEOZonesHistory(BaseModel):
 
 
 class TrackedObjectsDelta(BaseModel):
-    tracked_objects_total: int
-    tracked_objects_on_orbit: int
-    payloads_on_orbit: int
-    debris_on_orbit: int
+    field: str
+    previous: int
+    current: int
+    delta: int
 
 class TrackedObjectsDeltasResponse(BaseModel):
     data_source: str
-    latest_snapshot_time_utc: str
+    snapshot_time_utc: str
     previous_snapshot_time_utc: Optional[str] = None
-    latest: TrackedObjectsDelta
-    previous: Optional[TrackedObjectsDelta] = None
-    delta: Optional[TrackedObjectsDelta] = None
+    deltas: list[TrackedObjectsDelta]
     notes: Optional[str] = None
+
 
 # ---------------------------
 # Active LEO / Active Regimes (Real data)
