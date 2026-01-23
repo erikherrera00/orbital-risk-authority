@@ -91,20 +91,6 @@ def compute_leo_zones_from_active_catalog() -> List[Any]:
     raise SystemExit("❌ catalog.py is missing a LEO zones computation helper (expected compute_leo_zones_from_active_catalog)")
 
 
-def load_tracked_totals() -> Dict[str, int]:
-    if not TRACKED_TOTAL_PATH.exists():
-        return {"tracked_total": 0, "active_total": 0, "inactive_total": 0}
-    try:
-        raw = json.loads(TRACKED_TOTAL_PATH.read_text(encoding="utf-8"))
-        return {
-            "tracked_total": int(raw.get("tracked_total", 0)),
-            "active_total": int(raw.get("active_total", 0)),
-            "inactive_total": int(raw.get("inactive_total", 0)),
-        }
-    except Exception:
-        return {"tracked_total": 0, "active_total": 0, "inactive_total": 0}
-
-
 def _load_tracked_totals_block() -> dict:
     if not TRACKED_TOTAL_PATH.exists():
         return {
