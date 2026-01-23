@@ -1,5 +1,4 @@
-fastapi
-uvicorn
-pydantic
-python-dateutil
-EOF
+fastapi>=0.110
+uvicorn[standard]>=0.27
+pydantic>=2.6
+python-dateutil>=2.9
