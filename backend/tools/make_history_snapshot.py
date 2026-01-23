@@ -105,6 +105,23 @@ def load_tracked_totals() -> Dict[str, int]:
         return {"tracked_total": 0, "active_total": 0, "inactive_total": 0}
 
 
+def _load_tracked_totals_block() -> dict:
+    if not TRACKED_TOTAL_PATH.exists():
+        return {
+            "tracked_objects_total": 0,
+            "tracked_objects_on_orbit": 0,
+            "payloads_on_orbit": 0,
+            "debris_on_orbit": 0,
+        }
+    base = json.loads(TRACKED_TOTAL_PATH.read_text(encoding="utf-8"))
+    return {
+        "tracked_objects_total": int(base.get("tracked_objects_total", 0) or 0),
+        "tracked_objects_on_orbit": int(base.get("tracked_objects_on_orbit", 0) or 0),
+        "payloads_on_orbit": int(base.get("payloads_on_orbit", 0) or 0),
+        "debris_on_orbit": int(base.get("debris_on_orbit", 0) or 0),
+    }
+
+
 def main() -> int:
     args = parse_args()
 
@@ -124,7 +141,7 @@ def main() -> int:
 
     active_regimes = compute_active_regimes()
     leo_zones = compute_leo_zones_from_active_catalog()
-    tracked_objects = load_tracked_totals()
+    tracked_objects = _load_tracked_totals_block()
 
     snapshot: Dict[str, Any] = {
         "snapshot_time_utc": snapshot_time_utc,
