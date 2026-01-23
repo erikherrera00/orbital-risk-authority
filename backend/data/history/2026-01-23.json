@@ -4,7 +4,7 @@
     "LEO": 13238,
     "MEO": 178
   },
-  "data_snapshot_time_utc": "2026-01-02T08:34:25.061839Z",
+  "data_snapshot_time_utc": "2026-01-23T06:51:47.590300Z",
   "leo_zones": [
     {
       "count": 5988,
@@ -27,7 +27,7 @@
       "zpi": 7.33
     }
   ],
-  "snapshot_time_utc": "2026-01-23T06:06:10.617258Z",
+  "snapshot_time_utc": "2026-01-23T06:51:47.940461Z",
   "tracked_objects": {
     "debris_on_orbit": 15110,
     "payloads_on_orbit": 17695,
