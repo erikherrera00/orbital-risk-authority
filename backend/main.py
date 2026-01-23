@@ -1,4 +1,3 @@
-
 from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, RedirectResponse
@@ -459,50 +458,46 @@ def _extract_tracked_block(s: dict) -> dict[str, int]:
     }
 
 
-@app.get("/ori/deltas/tracked-objects", response_model=TrackedObjectsDeltasResponse, tags=["ori"])
-def ori_tracked_objects_deltas(limit: int = 2):
-    """
-    Deltas computed from history snapshots (latest vs previous).
-    """
-    snaps = _load_history_files()
-    if not snaps:
-        raise HTTPException(status_code=404, detail="No history snapshots found")
+@app.get("/ori/tracked-objects/deltas", response_model=TrackedObjectsDeltasResponse, tags=["ori"])
+def tracked_objects_deltas(limit: int = Query(30, ge=2, le=365)):
+    history_dir = Path("backend/data/history")
+    files = sorted(history_dir.glob("*.json"))[-limit:]
 
-    if limit < 2:
-        limit = 2
+    points: list[TrackedObjectsDelta] = []
+    prev_total: int | None = None
+    prev_active: int | None = None
 
-    window = snaps[-limit:]
-    if len(window) < 2:
-        raise HTTPException(status_code=400, detail="Need at least 2 snapshots to compute deltas")
+    for f in files:
+        d = json.loads(f.read_text(encoding="utf-8"))
+        t = d.get("tracked_objects") or {}
 
-    prev = window[-2]
-    curr = window[-1]
+        # Skip snapshots that don't have tracked_objects yet
+        if not t:
+            continue
 
-    prev_t = str(prev.get("snapshot_time_utc", "unknown"))
-    curr_t = str(curr.get("snapshot_time_utc", "unknown"))
+        total = int(t.get("tracked_objects_total", 0) or 0)
+        active = int(t.get("active_satellites", 0) or 0)
 
-    prev_vals = _extract_tracked_block(prev)
-    curr_vals = _extract_tracked_block(curr)
+        delta_total = (total - prev_total) if prev_total is not None else 0
+        delta_active = (active - prev_active) if prev_active is not None else 0
 
-    deltas: list[TrackedObjectsDelta] = []
-    for k in ["tracked_objects_total", "tracked_objects_on_orbit", "payloads_on_orbit", "debris_on_orbit"]:
-        p = int(prev_vals.get(k, 0))
-        c = int(curr_vals.get(k, 0))
-        deltas.append(
+        points.append(
             TrackedObjectsDelta(
-                field=k,
-                previous=p,
-                current=c,
-                delta=c - p,
+                snapshot_time_utc=str(d.get("snapshot_time_utc", "unknown")),
+                tracked_objects_total=total,
+                delta_tracked_objects_total=delta_total,
+                active_satellites=active,
+                delta_active_satellites=delta_active,
             )
         )
 
+        prev_total = total
+        prev_active = active
+
     return TrackedObjectsDeltasResponse(
-        data_source="ORA history snapshots (backend/data/history/*.json)",
-        snapshot_time_utc=curr_t,
-        previous_snapshot_time_utc=prev_t,
-        deltas=deltas,
-        notes="Deltas are computed from the latest two history snapshots in the requested window.",
+        data_source="ORA history snapshots (tracked objects)",
+        points=points,
+        notes="Deltas are computed relative to the immediately previous snapshot in the returned window.",
     )
 
 

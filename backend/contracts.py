@@ -237,16 +237,16 @@ class LEOZonesHistory(BaseModel):
 
 
 class TrackedObjectsDelta(BaseModel):
-    field: str
-    previous: int
-    current: int
-    delta: int
+    snapshot_time_utc: str
+    tracked_objects_total: int
+    delta_tracked_objects_total: int
+    active_satellites: int
+    delta_active_satellites: int
+
 
 class TrackedObjectsDeltasResponse(BaseModel):
     data_source: str
-    snapshot_time_utc: str
-    previous_snapshot_time_utc: Optional[str] = None
-    deltas: list[TrackedObjectsDelta]
+    points: list[TrackedObjectsDelta]
     notes: Optional[str] = None
 
 
