@@ -329,15 +329,20 @@
   // Use your actual Render URL here:
   const ORA_API_BASE = "https://orbital-risk-authority.onrender.com";  // <-- example, replace
   
-  async function fetchWithTimeout(url, opts = {}, ms = 12000) {
+async function fetchWithTimeout(url, opts = {}, ms = 12000) {
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort(), ms);
+
+  // Respect caller's URL. Allow passing "/ori/..." or a full URL.
+  const fullUrl = url.startsWith("http") ? url : (ORA_API_BASE + url);
+
   try {
-    return await fetch(ORA_API_BASE + "/ori/tracked-objects/deltas")
+    return await fetch(fullUrl, { ...opts, signal: controller.signal });
   } finally {
     clearTimeout(id);
   }
 }
+
 
 
 function escapeHtml(s) {
@@ -347,6 +352,42 @@ function escapeHtml(s) {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
+}
+
+
+async function loadTrackedObjects() {
+  const target = document.getElementById("tracked-objects");
+  if (!target) return;
+
+  target.textContent = "Loading tracked objects…";
+
+  try {
+    const res = await fetchWithTimeout("/ori/tracked-objects/deltas");
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+    const d = await res.json();
+
+    const total = Number(d.tracked_objects_total || 0).toLocaleString();
+    const active = Number(d.active_satellites || 0).toLocaleString();
+    const inactive = Number(d.inactive_or_debris_estimate || 0).toLocaleString();
+    const ts = d.snapshot_time_utc || "unknown";
+
+    target.innerHTML = `
+      <div style="margin-top:0.25rem;">
+        <div><strong>Tracked Objects (Total):</strong> ${total}</div>
+        <div><strong>Active Satellites:</strong> ${active}</div>
+        <div><strong>Inactive / Debris (est):</strong> ${inactive}</div>
+        <div style="opacity:0.8; margin-top:0.25rem;">Updated: ${escapeHtml(ts)}</div>
+        ${d.notes ? `<div style="opacity:0.8; margin-top:0.25rem;">${escapeHtml(String(d.notes))}</div>` : ""}
+        <div style="margin-top:0.25rem;">
+          <a href="${ORA_API_BASE}/ori/tracked-objects" target="_blank" rel="noopener">API: /ori/tracked-objects</a>
+        </div>
+      </div>
+    `;
+  } catch (e) {
+    console.error("loadTrackedObjects failed:", e);
+    target.textContent = "Unable to load tracked objects.";
+  }
 }
 
 
@@ -887,6 +928,7 @@ document.addEventListener("DOMContentLoaded", () => {
   try { loadBrief(); } catch (e) { console.error(e); }
   try { loadLEOZoneDeltas(); } catch (e) { console.error(e); }
   try { loadOperatorWatchlist(); } catch (e) { console.error(e); }
+  try { loadTrackedTotals(); } catch (e) { console.error(e); }
   try { loadTrackedObjectsDeltas(); } catch (e) { console.error(e); }
   try { loadVersion(); } catch (e) { console.error(e); }
 });
