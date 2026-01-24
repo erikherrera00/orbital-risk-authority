@@ -268,6 +268,9 @@
     <div id="ora-active-leo" style="margin-top:0.5rem; font-size:0.95rem;">
       Loading active LEO snapshot…
     </div>
+    <div id="tracked-objects"></div>
+    <div id="tracked-objects-deltas"></div>
+
     <h2>Key documents (prototype)</h2>
     <div class="grid">
       <div class="card">
@@ -330,7 +333,7 @@
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort(), ms);
   try {
-    return await fetch(url, { ...opts, signal: controller.signal });
+    return await fetch(ORA_API_BASE + "/ori/tracked-objects/deltas")
   } finally {
     clearTimeout(id);
   }
@@ -427,6 +430,42 @@ async function loadGlobalRiskSummary() {
   } catch (e) {
     console.error("loadGlobalRiskSummary failed:", e);
     target.textContent = "Unable to load global ORI snapshot (see console).";
+  }
+}
+
+
+async function loadTrackedObjects() {
+  const target = document.getElementById("tracked-objects");
+  if (!target) {
+    console.warn("Missing element #tracked-objects");
+    return;
+  }
+
+  target.textContent = "Loading tracked objects…";
+
+  try {
+    const res = await fetch(ORA_API_BASE + "/ori/tracked-objects");
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+
+    const total = Number(data.tracked_objects_total || 0).toLocaleString();
+    const active = Number(data.active_satellites || 0).toLocaleString();
+    const inactive = Number(data.inactive_or_debris_estimate || 0).toLocaleString();
+    const ts = data.snapshot_time_utc || "unknown";
+
+    target.innerHTML = `
+      <div><strong>Tracked Objects (Total):</strong> ${total}</div>
+      <div><strong>Active Satellites:</strong> ${active}</div>
+      <div><strong>Inactive / Debris (est):</strong> ${inactive}</div>
+      <div style="opacity:0.8; margin-top:0.25rem;">Updated: ${ts}</div>
+      ${data.notes ? `<div style="opacity:0.8; margin-top:0.25rem;">${data.notes}</div>` : ""}
+      <div style="margin-top:0.25rem;">
+        <a href="${ORA_API_BASE}/ori/tracked-objects" target="_blank" rel="noopener">API: /ori/tracked-objects</a>
+      </div>
+    `;
+  } catch (e) {
+    console.error("loadTrackedObjects failed:", e);
+    target.textContent = "Unable to load tracked objects.";
   }
 }
 
@@ -848,6 +887,7 @@ document.addEventListener("DOMContentLoaded", () => {
   try { loadBrief(); } catch (e) { console.error(e); }
   try { loadLEOZoneDeltas(); } catch (e) { console.error(e); }
   try { loadOperatorWatchlist(); } catch (e) { console.error(e); }
+  try { loadTrackedObjectsDeltas(); } catch (e) { console.error(e); }
   try { loadVersion(); } catch (e) { console.error(e); }
 });
 
