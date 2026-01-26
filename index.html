@@ -328,21 +328,19 @@
 <script>
   // Use your actual Render URL here:
   const ORA_API_BASE = "https://orbital-risk-authority.onrender.com";  // <-- example, replace
+
   
-async function fetchWithTimeout(url, opts = {}, ms = 12000) {
+async function fetchWithTimeout(path, opts = {}, ms = 12000) {
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort(), ms);
 
-  // Respect caller's URL. Allow passing "/ori/..." or a full URL.
-  const fullUrl = url.startsWith("http") ? url : (ORA_API_BASE + url);
-
   try {
-    return await fetch(fullUrl, { ...opts, signal: controller.signal });
+    const url = path.startsWith("http") ? path : (ORA_API_BASE + path);
+    return await fetch(url, { ...opts, signal: controller.signal });
   } finally {
     clearTimeout(id);
   }
 }
-
 
 
 function escapeHtml(s) {
@@ -471,42 +469,6 @@ async function loadGlobalRiskSummary() {
   } catch (e) {
     console.error("loadGlobalRiskSummary failed:", e);
     target.textContent = "Unable to load global ORI snapshot (see console).";
-  }
-}
-
-
-async function loadTrackedObjects() {
-  const target = document.getElementById("tracked-objects");
-  if (!target) {
-    console.warn("Missing element #tracked-objects");
-    return;
-  }
-
-  target.textContent = "Loading tracked objects…";
-
-  try {
-    const res = await fetch(ORA_API_BASE + "/ori/tracked-objects");
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = await res.json();
-
-    const total = Number(data.tracked_objects_total || 0).toLocaleString();
-    const active = Number(data.active_satellites || 0).toLocaleString();
-    const inactive = Number(data.inactive_or_debris_estimate || 0).toLocaleString();
-    const ts = data.snapshot_time_utc || "unknown";
-
-    target.innerHTML = `
-      <div><strong>Tracked Objects (Total):</strong> ${total}</div>
-      <div><strong>Active Satellites:</strong> ${active}</div>
-      <div><strong>Inactive / Debris (est):</strong> ${inactive}</div>
-      <div style="opacity:0.8; margin-top:0.25rem;">Updated: ${ts}</div>
-      ${data.notes ? `<div style="opacity:0.8; margin-top:0.25rem;">${data.notes}</div>` : ""}
-      <div style="margin-top:0.25rem;">
-        <a href="${ORA_API_BASE}/ori/tracked-objects" target="_blank" rel="noopener">API: /ori/tracked-objects</a>
-      </div>
-    `;
-  } catch (e) {
-    console.error("loadTrackedObjects failed:", e);
-    target.textContent = "Unable to load tracked objects.";
   }
 }
 
