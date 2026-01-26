@@ -876,6 +876,106 @@ async function loadLEOZones() {
 }
 
 
+// Back-compat: some parts of the page call these names.
+// We keep them so the page never breaks even if we refactor.
+
+async function loadTrackedTotals() {
+  // This should render the tracked objects SUMMARY block.
+  // If you already created loadTrackedObjects(), call it.
+  if (typeof loadTrackedObjects === "function") {
+    return await loadTrackedObjects();
+  }
+  console.warn("loadTrackedTotals called, but loadTrackedObjects() is missing.");
+}
+
+async function loadTrackedObjectsDeltas() {
+  const target = document.getElementById("tracked-objects-deltas");
+  if (!target) return;
+
+  target.textContent = "Loading tracked objects deltas…";
+
+  try {
+    const res = await fetchWithTimeout("/ori/tracked-objects/deltas");
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+    const d = await res.json();
+
+    // If your backend returns: { latest: {...}, previous: {...}, delta: {...} }
+    // OR returns a flat object with delta fields, this handles both.
+    const latest = d.latest ?? d.current ?? d;
+    const prev = d.previous ?? d.prev ?? null;
+
+    const total = Number(latest.tracked_objects_total ?? 0);
+    const active = Number(latest.active_satellites ?? 0);
+    const inactive = Number(latest.inactive_or_debris_estimate ?? 0);
+
+    // Common delta naming patterns:
+    const dt = Number(d.delta_tracked_objects_total ?? d.delta?.tracked_objects_total ?? 0);
+    const da = Number(d.delta_active_satellites ?? d.delta?.active_satellites ?? 0);
+    const di = Number(d.delta_inactive_or_debris_estimate ?? d.delta?.inactive_or_debris_estimate ?? 0);
+
+    function arrow(n) {
+      if (n > 0) return "↑";
+      if (n < 0) return "↓";
+      return "→";
+    }
+    function fmt(n) {
+      const sign = n > 0 ? "+" : "";
+      return `${arrow(n)} ${sign}${n.toLocaleString()}`;
+    }
+
+    const ts = latest.snapshot_time_utc || "unknown";
+    const prevTs = prev?.snapshot_time_utc || "";
+
+    target.innerHTML = `
+      <div style="margin-top:0.25rem;">
+        <div style="opacity:0.85; margin-bottom:0.35rem;">
+          <strong>Deltas</strong> (latest vs previous)
+        </div>
+
+        <table style="width:100%; border-collapse:collapse; font-size:0.9rem;">
+          <thead>
+            <tr>
+              <th style="text-align:left; padding:0.35rem 0;">Metric</th>
+              <th style="text-align:left; padding:0.35rem 0;">Value</th>
+              <th style="text-align:left; padding:0.35rem 0;">Δ</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="padding:0.25rem 0;">Tracked Objects Total</td>
+              <td style="padding:0.25rem 0;">${total.toLocaleString()}</td>
+              <td style="padding:0.25rem 0;">${fmt(dt)}</td>
+            </tr>
+            <tr>
+              <td style="padding:0.25rem 0;">Active Satellites</td>
+              <td style="padding:0.25rem 0;">${active.toLocaleString()}</td>
+              <td style="padding:0.25rem 0;">${fmt(da)}</td>
+            </tr>
+            <tr>
+              <td style="padding:0.25rem 0;">Inactive / Debris (est)</td>
+              <td style="padding:0.25rem 0;">${inactive.toLocaleString()}</td>
+              <td style="padding:0.25rem 0;">${fmt(di)}</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div style="opacity:0.8; margin-top:0.35rem;">
+          Latest: ${escapeHtml(ts)}${prevTs ? ` · Previous: ${escapeHtml(prevTs)}` : ""}
+        </div>
+
+        <div style="margin-top:0.25rem;">
+          <a href="${ORA_API_BASE}/ori/tracked-objects/deltas" target="_blank" rel="noopener">API: /ori/tracked-objects/deltas</a>
+        </div>
+      </div>
+    `;
+  } catch (e) {
+    console.error("loadTrackedObjectsDeltas failed:", e);
+    target.textContent = "Unable to load tracked objects deltas.";
+  }
+}
+
+
 async function loadOperatorRisk() {
   const target = document.getElementById("ori-operators");
   if (!target) return;
