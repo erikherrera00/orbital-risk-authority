@@ -330,13 +330,15 @@
   const ORA_API_BASE = "https://orbital-risk-authority.onrender.com";  // <-- example, replace
 
   
-async function fetchWithTimeout(path, opts = {}, ms = 12000) {
+async function fetchWithTimeout(url, opts = {}, ms = 12000) {
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort(), ms);
 
+  // Respect caller's URL. Allow passing "/ori/..." or a full URL.
+  const fullUrl = url.startsWith("http") ? url : (ORA_API_BASE + url);
+
   try {
-    const url = path.startsWith("http") ? path : (ORA_API_BASE + path);
-    return await fetch(url, { ...opts, signal: controller.signal });
+    return await fetch(fullUrl, { ...opts, signal: controller.signal });
   } finally {
     clearTimeout(id);
   }
