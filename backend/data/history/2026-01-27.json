@@ -1,0 +1,37 @@
+{
+  "active_regimes": {
+    "GEO": 591,
+    "LEO": 13238,
+    "MEO": 178
+  },
+  "data_snapshot_time_utc": "2026-01-27T06:52:51.832829Z",
+  "leo_zones": [
+    {
+      "count": 5988,
+      "zone_label": "LEO-1",
+      "zpi": 100.0
+    },
+    {
+      "count": 5916,
+      "zone_label": "LEO-2",
+      "zpi": 98.8
+    },
+    {
+      "count": 827,
+      "zone_label": "LEO-3",
+      "zpi": 13.81
+    },
+    {
+      "count": 439,
+      "zone_label": "LEO-4",
+      "zpi": 7.33
+    }
+  ],
+  "snapshot_time_utc": "2026-01-27T06:52:52.775405Z",
+  "tracked_objects": {
+    "debris_on_orbit": 15110,
+    "payloads_on_orbit": 17695,
+    "tracked_objects_on_orbit": 32805,
+    "tracked_objects_total": 67422
+  }
+}
